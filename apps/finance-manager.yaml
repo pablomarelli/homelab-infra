@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: finance-manager
+  namespace: argocd
+spec:
+  project: default
+  source: 
+    repoURL: https://github.com/PabloMarelli/finance-manager.git
+    targetRevision: HEAD
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: finance
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
