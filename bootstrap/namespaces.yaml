@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finance
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: home-assistant
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infrastructure
