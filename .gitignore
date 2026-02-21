@@ -21,3 +21,11 @@ k3s.yaml
 .idea/
 .vscode/
 *.swp
+
+# Tofu
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
