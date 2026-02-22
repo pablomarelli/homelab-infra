@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-portfolio
+  namespace: portfolio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dev-portfolio
+  template:
+    metadata:
+      labels:
+        app: dev-portfolio
+    spec:
+      containers:
+        - name: dev-portfolio
+          image: ghcr.io/pablomarelli/dev-portfolio:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+

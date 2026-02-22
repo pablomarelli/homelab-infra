@@ -32,7 +32,7 @@ spec:
                   key: tunnel-token
           volumeMounts:
             - name: config
-              mounthPath: /etc/cloudflared/config.yaml
+              mountPath: /etc/cloudflared/config.yaml
               subPath: config.yaml
               readOnly: true
           resources:
