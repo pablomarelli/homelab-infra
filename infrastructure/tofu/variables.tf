@@ -13,11 +13,11 @@ variable "domain" {
 variable "tunnel_id" {
   description = "Cloudflare Tunnel ID"
   type = string
-  default = "e9185fce-e694-4220-8baa-97d40d84df61"
+  default = "adcf61e7-1183-4ff4-9f77-b25fa8fed5fd"
 }
 
 variable "subdomains" {
   description = "Subdomains to route through the tunnel"
   type = list(string)
-  default = ["argocd", "portfolio", "finance", "home"]
+  default = ["argocd", "portfolio", "finance", "home", "auth", "status", "analytics", "grafana"]
 }

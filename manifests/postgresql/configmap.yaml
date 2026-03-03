@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-init
+  namespace: monitoring
+data:
+  init.sql: |
+    -- Create databases
+    CREATE DATABASE authentik;
+    CREATE DATABASE umami;
+    
+    -- Create users with passwords from environment
+    CREATE USER authentik WITH PASSWORD :'AUTHENTIK_DB_PASSWORD';
+    CREATE USER umami WITH PASSWORD :'UMAMI_DB_PASSWORD';
+    
+    -- Grant privileges
+    GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;
+    GRANT ALL PRIVILEGES ON DATABASE umami TO umami;
+    
+    -- Connect to each database and set schema permissions
+    \c authentik
+    GRANT ALL ON SCHEMA public TO authentik;
+    
+    \c umami
+    GRANT ALL ON SCHEMA public TO umami;
