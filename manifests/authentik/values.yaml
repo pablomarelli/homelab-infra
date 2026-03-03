@@ -1,0 +1,59 @@
+authentik:
+  secret_key: ""  # Loaded from secret
+  error_reporting:
+    enabled: false
+  postgresql:
+    host: postgresql.monitoring.svc.cluster.local
+    name: authentik
+    user: authentik
+    password: ""  # Loaded from secret
+server:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+  env:
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      value: "postgresql.monitoring.svc.cluster.local"
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      value: "authentik"
+    - name: AUTHENTIK_POSTGRESQL__USER
+      value: "authentik"
+worker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+  env:
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      value: "postgresql.monitoring.svc.cluster.local"
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      value: "authentik"
+    - name: AUTHENTIK_POSTGRESQL__USER
+      value: "authentik"
+postgresql:
+  enabled: false  # Using our shared PostgreSQL
+redis:
+  enabled: true  # Authentik needs Redis for caching
+  master:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
