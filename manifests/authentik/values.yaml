@@ -51,7 +51,7 @@ redis:
   enabled: true
   image:
     repository: bitnami/redis
-    tag: 7.4-debian-12
+    tag: latest
   master:
     resources:
       requests:
