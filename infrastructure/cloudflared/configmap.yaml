@@ -5,6 +5,8 @@ metadata:
   namespace: infrastructure
 data:
   config.yaml: |
+    tunnel: adcf61e7-1183-4ff4-9f77-b25fa8fed5fd
+    credentials-file: /etc/cloudflared/credentials.json
     ingress:
       - hostname: argocd.pablomarelli.dev
         service: https://argocd-server.argocd.svc.cluster.local:443
@@ -16,4 +18,12 @@ data:
         service: http://finance-svc.finance.svc.cluster.local:80
       - hostname: home.pablomarelli.dev
         service: http://home-assistant-svc.home-assistant.svc.cluster.local:8123
+      - hostname: auth.pablomarelli.dev
+        service: http://authentik-server.monitoring.svc.cluster.local:80
+      - hostname: status.pablomarelli.dev
+        service: http://uptime-kuma.monitoring.svc.cluster.local:3001
+      - hostname: analytics.pablomarelli.dev
+        service: http://umami.monitoring.svc.cluster.local:3000
+      - hostname: grafana.pablomarelli.dev
+        service: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
       - service: http_status:404
