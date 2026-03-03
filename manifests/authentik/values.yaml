@@ -1,12 +1,12 @@
 authentik:
-  secret_key: ""  # Loaded from secret
+  secret_key: ""
   error_reporting:
     enabled: false
   postgresql:
     host: postgresql.monitoring.svc.cluster.local
     name: authentik
     user: authentik
-    password: ""  # Loaded from secret
+    password: ""
 server:
   replicas: 1
   resources:
@@ -46,9 +46,12 @@ worker:
     - name: AUTHENTIK_POSTGRESQL__USER
       value: "authentik"
 postgresql:
-  enabled: false  # Using our shared PostgreSQL
+  enabled: false
 redis:
-  enabled: true  # Authentik needs Redis for caching
+  enabled: true
+  image:
+    repository: bitnami/redis
+    tag: 7.4-debian-12
   master:
     resources:
       requests:
