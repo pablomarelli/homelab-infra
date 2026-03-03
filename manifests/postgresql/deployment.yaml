@@ -26,6 +26,16 @@ spec:
                 secretKeyRef:
                   name: postgresql-credentials
                   key: POSTGRES_PASSWORD
+            - name: AUTHENTIK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: AUTHENTIK_DB_PASSWORD
+            - name: UMAMI_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: UMAMI_DB_PASSWORD
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
