@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-error-overview
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: "Errors"
+data:
+  error-overview.json: |
+    {
+      "title": "Error Overview",
+      "uid": "error-overview",
+      "tags": ["logs", "errors", "alerts"],
+      "timezone": "browser",
+      "refresh": "1m",
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+            "query": "label_values(namespace)",
+            "refresh": 2,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {"text": "All", "value": "$__all"}
+          },
+          {
+            "name": "severity",
+            "type": "custom",
+            "current": {"text": "error", "value": "error"},
+            "options": [
+              {"text": "error", "value": "error", "selected": true},
+              {"text": "warn", "value": "warn", "selected": false},
+              {"text": "fatal", "value": "fatal", "selected": false},
+              {"text": "panic", "value": "panic", "selected": false}
+            ],
+            "multi": true,
+            "includeAll": true,
+            "allValue": "error|warn|fatal|panic"
+          },
+          {
+            "name": "search",
+            "type": "textbox",
+            "current": {"text": "", "value": ""},
+            "label": "Search"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Error Trend",
+          "type": "timeseries",
+          "gridPos": {"h": 6, "w": 16, "x": 0, "y": 0},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "sum(count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__interval]))",
+              "legendFormat": "Errors"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "fixed", "fixedColor": "red"},
+              "custom": {
+                "drawStyle": "bars",
+                "fillOpacity": 50
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Errors by Namespace",
+          "type": "piechart",
+          "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "sum by (namespace) (count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__range]))",
+              "legendFormat": "{{namespace}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "values": ["value", "percent"]
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Top Pods with Errors",
+          "type": "table",
+          "gridPos": {"h": 6, "w": 24, "x": 0, "y": 6},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "topk(10, sum by (namespace, pod) (count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__range])))",
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Value", "desc": true}]}}
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Error Logs",
+          "type": "logs",
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "{namespace=~\"$namespace\"} |~ \"(?i)($severity)\" |~ \"(?i)$search\"",
+              "refId": "A"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending"
+          }
+        }
+      ],
+      "schemaVersion": 39
+    }

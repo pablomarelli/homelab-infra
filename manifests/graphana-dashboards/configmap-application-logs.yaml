@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-application-logs
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: "Applications"
+data:
+  application-logs.json: |
+    {
+      "title": "Application Logs",
+      "uid": "application-logs",
+      "tags": ["logs", "applications"],
+      "timezone": "browser",
+      "refresh": "1m",
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "custom",
+            "current": {"text": "portfolio", "value": "portfolio"},
+            "options": [
+              {"text": "portfolio", "value": "portfolio", "selected": true},
+              {"text": "finance", "value": "finance", "selected": false},
+              {"text": "home-assistant", "value": "home-assistant", "selected": false}
+            ],
+            "query": "portfolio,finance,home-assistant"
+          },
+          {
+            "name": "pod",
+            "type": "query",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+            "query": "label_values({namespace=\"$namespace\"}, pod)",
+            "refresh": 2,
+            "includeAll": true,
+            "allValue": ".*"
+          },
+          {
+            "name": "container",
+            "type": "query",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+            "query": "label_values({namespace=\"$namespace\", pod=~\"$pod\"}, container)",
+            "refresh": 2,
+            "includeAll": true,
+            "allValue": ".*"
+          },
+          {
+            "name": "level",
+            "type": "custom",
+            "current": {"text": "All", "value": ""},
+            "options": [
+              {"text": "All", "value": "", "selected": true},
+              {"text": "debug", "value": "debug", "selected": false},
+              {"text": "info", "value": "info", "selected": false},
+              {"text": "warn", "value": "warn", "selected": false},
+              {"text": "error", "value": "error", "selected": false}
+            ],
+            "includeAll": false
+          },
+          {
+            "name": "search",
+            "type": "textbox",
+            "current": {"text": "", "value": ""},
+            "label": "Search"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Log Volume",
+          "type": "timeseries",
+          "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "sum(count_over_time({namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ \"(?i)$search\" [$__interval]))",
+              "legendFormat": "Logs"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "bars",
+                "fillOpacity": 50
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Logs",
+          "type": "logs",
+          "gridPos": {"h": 18, "w": 24, "x": 0, "y": 6},
+          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "targets": [
+            {
+              "expr": "{namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ \"(?i)$search\" | level=~\"$level.*\"",
+              "refId": "A"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending"
+          }
+        }
+      ],
+      "schemaVersion": 39
+    }
