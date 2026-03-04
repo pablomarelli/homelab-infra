@@ -35,7 +35,7 @@ data:
           {
             "name": "pod",
             "type": "query",
-            "datasource": "Loki",
+            "datasource": {"type": "loki", "uid": "loki"},
             "query": "label_values({namespace=\"$namespace\"}, pod)",
             "refresh": 2,
             "includeAll": true,
@@ -44,7 +44,7 @@ data:
           {
             "name": "container",
             "type": "query",
-            "datasource": "Loki",
+            "datasource": {"type": "loki", "uid": "loki"},
             "query": "label_values({namespace=\"$namespace\", pod=~\"$pod\"}, container)",
             "refresh": 2,
             "includeAll": true,
@@ -64,7 +64,7 @@ data:
           "title": "Log Volume by Namespace",
           "type": "timeseries",
           "gridPos": {"h": 6, "w": 18, "x": 0, "y": 0},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "sum by (namespace) (count_over_time({namespace=~\"kube-system|argocd|infrastructure\"} [$__interval]))",
@@ -86,7 +86,7 @@ data:
           "title": "Error Count",
           "type": "stat",
           "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "sum(count_over_time({namespace=\"$namespace\"} |~ \"(?i)(error|fatal|panic)\" [$__range]))",
@@ -110,7 +110,7 @@ data:
           "title": "Logs",
           "type": "logs",
           "gridPos": {"h": 18, "w": 24, "x": 0, "y": 6},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "{namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ \"(?i)$search\"",

@@ -64,7 +64,7 @@ data:
           "title": "Log Volume by Component",
           "type": "timeseries",
           "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "sum by (pod) (count_over_time({namespace=\"monitoring\", pod=~\"$component\"} [$__interval]))",
@@ -86,7 +86,7 @@ data:
           "title": "Logs",
           "type": "logs",
           "gridPos": {"h": 18, "w": 24, "x": 0, "y": 6},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "{namespace=\"monitoring\", pod=~\"$component\"} |~ \"(?i)$search\" | level=~\"$level.*\"",
