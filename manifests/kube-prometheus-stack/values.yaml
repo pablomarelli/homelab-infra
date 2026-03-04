@@ -4,6 +4,8 @@ grafana:
   persistence:
     enabled: true
     size: 5Gi
+  deploymentStrategy:
+    type: Recreate
   resources:
     requests:
       cpu: 100m
@@ -16,6 +18,16 @@ grafana:
     securityContext:
       runAsUser: 0
       runAsNonRoot: false
+  # Additional data sources (Loki for logs)
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+      isDefault: false
+      jsonData:
+        maxLines: 1000
 # Prometheus configuration
 prometheus:
   prometheusSpec:

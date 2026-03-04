@@ -35,7 +35,7 @@ data:
           {
             "name": "pod",
             "type": "query",
-            "datasource": "Loki",
+            "datasource": {"type": "loki", "uid": "loki"},
             "query": "label_values({namespace=\"$namespace\"}, pod)",
             "refresh": 2,
             "includeAll": true,
@@ -44,7 +44,7 @@ data:
           {
             "name": "container",
             "type": "query",
-            "datasource": "Loki",
+            "datasource": {"type": "loki", "uid": "loki"},
             "query": "label_values({namespace=\"$namespace\", pod=~\"$pod\"}, container)",
             "refresh": 2,
             "includeAll": true,
@@ -77,7 +77,7 @@ data:
           "title": "Log Volume",
           "type": "timeseries",
           "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "sum(count_over_time({namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ \"(?i)$search\" [$__interval]))",
@@ -98,7 +98,7 @@ data:
           "title": "Logs",
           "type": "logs",
           "gridPos": {"h": 18, "w": 24, "x": 0, "y": 6},
-          "datasource": "Loki",
+          "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {
               "expr": "{namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ \"(?i)$search\" | level=~\"$level.*\"",
