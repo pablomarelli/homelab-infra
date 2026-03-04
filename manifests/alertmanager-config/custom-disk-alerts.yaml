@@ -1,0 +1,52 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-disk-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: disk-space
+      rules:
+        # Warning at 30% free
+        - alert: DiskSpaceLow30Percent
+          expr: |
+            (
+              node_filesystem_avail_bytes{fstype!="tmpfs",mountpoint="/"} 
+              / node_filesystem_size_bytes{fstype!="tmpfs",mountpoint="/"}
+            ) * 100 < 30
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Disk space below 30% on {{ $labels.instance }}"
+            description: "Disk space is at {{ printf \"%.1f\" $value }}% free on {{ $labels.mountpoint }}"
+        
+        # Warning at 20% free
+        - alert: DiskSpaceLow20Percent
+          expr: |
+            (
+              node_filesystem_avail_bytes{fstype!="tmpfs",mountpoint="/"} 
+              / node_filesystem_size_bytes{fstype!="tmpfs",mountpoint="/"}
+            ) * 100 < 20
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Disk space below 20% on {{ $labels.instance }}"
+            description: "Disk space is at {{ printf \"%.1f\" $value }}% free on {{ $labels.mountpoint }}"
+        
+        # Critical at 10% free
+        - alert: DiskSpaceCritical10Percent
+          expr: |
+            (
+              node_filesystem_avail_bytes{fstype!="tmpfs",mountpoint="/"} 
+              / node_filesystem_size_bytes{fstype!="tmpfs",mountpoint="/"}
+            ) * 100 < 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CRITICAL: Disk space below 10% on {{ $labels.instance }}"
+            description: "Disk space is at {{ printf \"%.1f\" $value }}% free on {{ $labels.mountpoint }}. Immediate action required!"
