@@ -63,6 +63,33 @@ alertmanager:
       limits:
         cpu: 200m
         memory: 256Mi
+    secrets:
+      - alertmanager-discord-webhook
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: 'discord'
+      routes:
+        # Only route critical and warning alerts to Discord
+        - receiver: 'discord'
+          matchers:
+            - severity=~"critical|warning"
+        # Silence info alerts (send to null)
+        - receiver: 'null'
+          matchers:
+            - severity="info"
+    receivers:
+      - name: 'null'
+      - name: 'discord'
+        webhook_configs:
+          - url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/webhook-url
+            send_resolved: true
+    templates: []
 # Node exporter for host metrics
 nodeExporter:
   enabled: true
