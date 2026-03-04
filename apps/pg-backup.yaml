@@ -1,0 +1,23 @@
+# Restore authentik
+# kubectl exec -n monitoring deploy/postgresql -- pg_restore -d authentik -c /path/to/authentik_<timestamp>.dump
+# Restore umami
+# kubectl exec -n monitoring deploy/postgresql -- pg_restore -d umami -c /path/to/umami_<timestamp>.dump
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pg-backup
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/pg-backup
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
