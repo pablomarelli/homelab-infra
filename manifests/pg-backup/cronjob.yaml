@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: monitoring
+spec:
+  schedule: "0 3,15 * * *"  # 3:00 AM and 3:00 PM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-backup
+              image: postgres:16-alpine
+              env:
+                - name: PGHOST
+                  value: postgresql.monitoring.svc.cluster.local
+                - name: PGUSER
+                  value: postgres
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-credentials
+                      key: POSTGRES_PASSWORD
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_DIR=/backups
+                  
+                  echo "Starting backup at $TIMESTAMP"
+                  
+                  # Backup authentik database
+                  echo "Backing up authentik..."
+                  pg_dump -Fc authentik > "$BACKUP_DIR/authentik_$TIMESTAMP.dump"
+                  
+                  # Backup umami database
+                  echo "Backing up umami..."
+                  pg_dump -Fc umami > "$BACKUP_DIR/umami_$TIMESTAMP.dump"
+                  
+                  echo "Backups completed successfully"
+                  
+                  # Cleanup old backups (keep last 14 of each)
+                  echo "Cleaning up old backups..."
+                  cd $BACKUP_DIR
+                  ls -t authentik_*.dump 2>/dev/null | tail -n +15 | xargs -r rm -f
+                  ls -t umami_*.dump 2>/dev/null | tail -n +15 | xargs -r rm -f
+                  
+                  echo "Backup job completed"
+                  ls -la $BACKUP_DIR
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: pg-backups
