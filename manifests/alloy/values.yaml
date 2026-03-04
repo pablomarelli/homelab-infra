@@ -1,0 +1,16 @@
+alloy:
+  configMap:
+    create: false
+    name: alloy-config
+    key: config.alloy
+  mounts:
+    varlog: true  # Mount /var/log to read pod logs
+controller:
+  type: daemonset  # Run on every node to collect logs
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
