@@ -4,8 +4,9 @@ grafana:
   persistence:
     enabled: true
     size: 5Gi
-  deploymentStrategy:
+  strategy:
     type: Recreate
+    rollingUpdate: null
   resources:
     requests:
       cpu: 100m
