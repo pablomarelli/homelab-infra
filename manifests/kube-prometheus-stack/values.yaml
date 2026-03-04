@@ -11,6 +11,11 @@ grafana:
     limits:
       cpu: 500m
       memory: 512Mi
+  initChownData:
+    enabled: true
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
 # Prometheus configuration
 prometheus:
   prometheusSpec:
