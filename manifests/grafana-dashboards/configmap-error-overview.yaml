@@ -24,7 +24,7 @@ data:
           {
             "name": "namespace",
             "type": "query",
-            "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+            "datasource": "Loki",
             "query": "label_values(namespace)",
             "refresh": 2,
             "includeAll": true,
@@ -59,7 +59,7 @@ data:
           "title": "Error Trend",
           "type": "timeseries",
           "gridPos": {"h": 6, "w": 16, "x": 0, "y": 0},
-          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "datasource": "Loki",
           "targets": [
             {
               "expr": "sum(count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__interval]))",
@@ -81,7 +81,7 @@ data:
           "title": "Errors by Namespace",
           "type": "piechart",
           "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0},
-          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "datasource": "Loki",
           "targets": [
             {
               "expr": "sum by (namespace) (count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__range]))",
@@ -101,7 +101,7 @@ data:
           "title": "Top Pods with Errors",
           "type": "table",
           "gridPos": {"h": 6, "w": 24, "x": 0, "y": 6},
-          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "datasource": "Loki",
           "targets": [
             {
               "expr": "topk(10, sum by (namespace, pod) (count_over_time({namespace=~\"$namespace\"} |~ \"(?i)($severity)\" [$__range])))",
@@ -118,7 +118,7 @@ data:
           "title": "Error Logs",
           "type": "logs",
           "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
-          "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+          "datasource": "Loki",
           "targets": [
             {
               "expr": "{namespace=~\"$namespace\"} |~ \"(?i)($severity)\" |~ \"(?i)$search\"",
