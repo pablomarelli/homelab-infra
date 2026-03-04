@@ -57,9 +57,42 @@ alloy:
         targets    = local.file_match.pod_logs.targets
         forward_to = [loki.process.pod_logs.receiver]
       }
-      // Process logs (parse CRI format)
+      // Process logs (parse CRI format and extract JSON fields)
       loki.process "pod_logs" {
+        // Parse CRI format (containerd logs)
         stage.cri {}
+        // Try to parse JSON logs and extract common fields
+        stage.json {
+          expressions = {
+            level   = "level",
+            msg     = "msg",
+            message = "message",
+            severity = "severity",
+          }
+          drop_malformed = true
+        }
+        // Normalize level field (handle different naming conventions)
+        stage.template {
+          source   = "level"
+          template = "{{ or .Value .severity | ToLower }}"
+        }
+        // Map common level variations to standard levels
+        stage.replace {
+          expression = "(warning)"
+          replace    = "warn"
+          source     = "level"
+        }
+        stage.replace {
+          expression = "(err)"
+          replace    = "error"
+          source     = "level"
+        }
+        // Add level as a label if extracted
+        stage.labels {
+          values = {
+            level = "",
+          }
+        }
         forward_to = [loki.write.loki.receiver]
       }
       // Write logs to Loki
