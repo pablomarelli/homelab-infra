@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ak-outpost-traefik
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ak-outpost-traefik
+  template:
+    metadata:
+      labels:
+        app: ak-outpost-traefik
+    spec:
+      containers:
+        - name: proxy
+          image: ghcr.io/goauthentik/proxy:2024.2.2
+          ports:
+            - containerPort: 9000
+            - containerPort: 9443
+          env:
+            - name: AUTHENTIK_HOST
+              value: "http://authentik-server.monitoring.svc.cluster.local"
+            - name: AUTHENTIK_INSECURE
+              value: "true"
+            - name: AUTHENTIK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-outpost-token
+                  key: token
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ak-outpost-traefik
+  namespace: monitoring
+spec:
+  selector:
+    app: ak-outpost-traefik
+  ports:
+    - name: http
+      port: 9000
+      targetPort: 9000
+    - name: https  
+      port: 9443
+      targetPort: 9443
