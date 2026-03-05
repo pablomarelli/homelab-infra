@@ -15,19 +15,22 @@ spec:
         - name: kube-prometheus-stack-grafana
           port: 80
 ---
-# Uptime Kuma - Public (catch-all, lower priority)
+# Uptime Kuma - Root redirect to public status page
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: uptime-kuma-public
+  name: uptime-kuma-root
   namespace: monitoring
 spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`status.pablomarelli.dev`)
+    - match: Host(`status.pablomarelli.dev`) && Path(`/`)
       kind: Rule
-      priority: 50
+      priority: 200
+      middlewares:
+        - name: uptime-kuma-root-redirect
+          namespace: monitoring
       services:
         - name: uptime-kuma
           port: 3001
@@ -93,6 +96,32 @@ spec:
       middlewares:
         - name: authentik-auth
           namespace: monitoring
+      services:
+        - name: uptime-kuma
+          port: 3001
+    - match: Host(`status.pablomarelli.dev`) && PathPrefix(`/status/internal`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: authentik-auth
+          namespace: monitoring
+      services:
+        - name: uptime-kuma
+          port: 3001
+---
+# Uptime Kuma - Public (catch-all, lowest priority)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: uptime-kuma-public
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`status.pablomarelli.dev`)
+      kind: Rule
+      priority: 50
       services:
         - name: uptime-kuma
           port: 3001
@@ -200,3 +229,4 @@ spec:
       services:
         - name: umami
           port: 3000
+---
