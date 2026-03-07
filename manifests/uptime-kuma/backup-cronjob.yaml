@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: uptime-kuma-backup
+  namespace: monitoring
+spec:
+  schedule: "30 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: uptime-kuma-backup
+              image: alpine:3.21
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  apk add --no-cache sqlite tar gzip coreutils
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  SOURCE_DIR=/source
+                  BACKUP_DIR=/backups
+                  TMP_DIR=$(mktemp -d)
+
+                  echo "Starting Uptime Kuma backup at $TIMESTAMP"
+
+                  sqlite3 "$SOURCE_DIR/kuma.db" ".backup '$TMP_DIR/kuma.db'"
+
+                  if [ -d "$SOURCE_DIR/docker-tls" ]; then
+                    cp -a "$SOURCE_DIR/docker-tls" "$TMP_DIR/"
+                  fi
+
+                  if [ -d "$SOURCE_DIR/screenshots" ]; then
+                    cp -a "$SOURCE_DIR/screenshots" "$TMP_DIR/"
+                  fi
+
+                  if [ -d "$SOURCE_DIR/upload" ]; then
+                    cp -a "$SOURCE_DIR/upload" "$TMP_DIR/"
+                  fi
+
+                  tar -C "$TMP_DIR" -czf "$BACKUP_DIR/uptime-kuma_$TIMESTAMP.tar.gz" .
+                  rm -rf "$TMP_DIR"
+
+                  echo "Cleaning up old backups..."
+                  cd "$BACKUP_DIR"
+                  ls -t uptime-kuma_*.tar.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
+
+                  echo "Backup job completed"
+                  ls -lh "$BACKUP_DIR"
+              volumeMounts:
+                - name: source
+                  mountPath: /source
+                  readOnly: true
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: source
+              persistentVolumeClaim:
+                claimName: uptime-kuma-data
+            - name: backups
+              persistentVolumeClaim:
+                claimName: uptime-kuma-backups
