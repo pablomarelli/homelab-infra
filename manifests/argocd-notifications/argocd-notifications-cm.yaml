@@ -22,25 +22,25 @@ data:
       - discord-main
       triggers:
       - on-sync-succeeded
-      selector: app.metadata.labels["notifications.argocd/channel"] == 'main' && app.metadata.labels["notifications.argocd/profile"] != 'quiet'
+      selector: notifications.argocd/channel=main,notifications.argocd/profile!=quiet
 
     - recipients:
       - discord-infra
       triggers:
       - on-sync-succeeded
-      selector: app.metadata.labels["notifications.argocd/channel"] == 'infra' && app.metadata.labels["notifications.argocd/profile"] != 'quiet'
+      selector: notifications.argocd/channel=infra,notifications.argocd/profile!=quiet
 
     - recipients:
       - discord-main
       triggers:
       - on-sync-failed
-      selector: app.metadata.labels["notifications.argocd/channel"] == 'main' && app.metadata.labels["notifications.argocd/profile"] == 'quiet'
+      selector: notifications.argocd/channel=main,notifications.argocd/profile=quiet
 
     - recipients:
       - discord-infra
       triggers:
       - on-sync-failed
-      selector: app.metadata.labels["notifications.argocd/channel"] == 'infra' && app.metadata.labels["notifications.argocd/profile"] == 'quiet'
+      selector: notifications.argocd/channel=infra,notifications.argocd/profile=quiet
 
   trigger.on-sync-succeeded: |
     - when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
