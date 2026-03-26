@@ -5,29 +5,56 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  # Discord webhook service configuration
-  service.webhook.discord: |
-    url: $argocd-notifications-secret.discord-webhook-url
+  service.webhook.discord-main: |
+    url: $discord-main-webhook-url
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  service.webhook.discord-infra: |
+    url: $discord-infra-webhook-url
     headers:
       - name: Content-Type
         value: application/json
 
   subscriptions: |
     - recipients:
-      - discord
+      - discord-main
       triggers:
       - on-sync-succeeded
+      selector: app.metadata.labels["notifications.argocd/channel"] == 'main' && app.metadata.labels["notifications.argocd/profile"] != 'quiet'
 
-  # Trigger definition for successful sync
+    - recipients:
+      - discord-infra
+      triggers:
+      - on-sync-succeeded
+      selector: app.metadata.labels["notifications.argocd/channel"] == 'infra' && app.metadata.labels["notifications.argocd/profile"] != 'quiet'
+
+    - recipients:
+      - discord-main
+      triggers:
+      - on-sync-failed
+      selector: app.metadata.labels["notifications.argocd/channel"] == 'main' && app.metadata.labels["notifications.argocd/profile"] == 'quiet'
+
+    - recipients:
+      - discord-infra
+      triggers:
+      - on-sync-failed
+      selector: app.metadata.labels["notifications.argocd/channel"] == 'infra' && app.metadata.labels["notifications.argocd/profile"] == 'quiet'
+
   trigger.on-sync-succeeded: |
     - when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
       oncePer: app.status.sync.revision
       send: [app-sync-succeeded]
 
-  # Discord notification template
+  trigger.on-sync-failed: |
+    - when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
+      oncePer: app.status.sync.revision
+      send: [app-sync-failed]
+
   template.app-sync-succeeded: |
     webhook:
-      discord:
+      discord-main:
         method: POST
         body: |
           {
@@ -44,6 +71,98 @@ data:
                 {
                   "name": "Health",
                   "value": "{{.app.status.health.status}}",
+                  "inline": true
+                },
+                {
+                  "name": "Channel",
+                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "inline": true
+                }
+              ],
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+      discord-infra:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "{{.app.metadata.name}} deployed",
+              "description": "Application synced successfully",
+              "color": 3447003,
+              "fields": [
+                {
+                  "name": "Project",
+                  "value": "{{.app.spec.project}}",
+                  "inline": true
+                },
+                {
+                  "name": "Health",
+                  "value": "{{.app.status.health.status}}",
+                  "inline": true
+                },
+                {
+                  "name": "Channel",
+                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "inline": true
+                }
+              ],
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+
+  template.app-sync-failed: |
+    webhook:
+      discord-main:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "{{.app.metadata.name}} sync failed",
+              "description": "Application sync did not complete successfully",
+              "color": 15158332,
+              "fields": [
+                {
+                  "name": "Project",
+                  "value": "{{.app.spec.project}}",
+                  "inline": true
+                },
+                {
+                  "name": "Phase",
+                  "value": "{{.app.status.operationState.phase}}",
+                  "inline": true
+                },
+                {
+                  "name": "Channel",
+                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "inline": true
+                }
+              ],
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+      discord-infra:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "{{.app.metadata.name}} sync failed",
+              "description": "Application sync did not complete successfully",
+              "color": 15158332,
+              "fields": [
+                {
+                  "name": "Project",
+                  "value": "{{.app.spec.project}}",
+                  "inline": true
+                },
+                {
+                  "name": "Phase",
+                  "value": "{{.app.status.operationState.phase}}",
+                  "inline": true
+                },
+                {
+                  "name": "Channel",
+                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
                   "inline": true
                 }
               ],
