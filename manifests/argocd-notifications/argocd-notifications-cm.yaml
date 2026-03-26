@@ -7,14 +7,16 @@ metadata:
 data:
   # Discord webhook service configuration
   service.webhook.discord: |
-    url: $discord-webhook-url
+    url: $argocd-discord-webhook:discord-webhook-url
     headers:
       - name: Content-Type
         value: application/json
 
-  # Default trigger for all applications
-  defaultTriggers: |
-    - on-sync-succeeded
+  subscriptions: |
+    - recipients:
+      - discord
+      triggers:
+      - on-sync-succeeded
 
   # Trigger definition for successful sync
   trigger.on-sync-succeeded: |

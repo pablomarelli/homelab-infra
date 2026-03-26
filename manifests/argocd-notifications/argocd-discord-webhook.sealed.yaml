@@ -2,12 +2,16 @@
 apiVersion: bitnami.com/v1alpha1
 kind: SealedSecret
 metadata:
-  name: argocd-notifications-secret
+  name: argocd-discord-webhook
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 spec:
   encryptedData:
     discord-webhook-url: AgAVrHgvbEpcJFtJagsCwa2Y4g4o8pvVoaB2wt+jR0cgQ3heBUyr+uti2+Mgcp3LbzzwLM30NYhjihK3WB6Ikx+kmr9/ZI2xyzE1wWYuAJXy7HzeFyQkQ5lsXUG8ENjSqZ7pt73ZZcGrzuWBay7QMRREjtQrsU90sdr61Eg6d1ZriREg4p07GTbpCEXzRXohiI7JsvKbOvn4HAdiOs89UMNDYgk7qzPKRsDOVXe8XKZPZA3L+p/xNvo5mP73pmRaUPwIxx+8odhLygDoOrgPYX0BUxnWwGJOo81pNTAo3llJpw3yaFmNwL7nga2gJLXG4yqcu6A+uFr590x/WdQQLXPM7Ou4jkSIuzo9TiaD0Q0orL91Eol3fjTpkXU0ioZ6jEO6acqBSpMEldtjFpRRB4iovvG8F0q6SY1/Jgl4LRnaRy3112a7IRj621spyCMwhmJGjyXgpf3qCXpd1Md3A3PBXrTM7z75btqdpZz4fX1Cid0+IHE42ibX6NLstl2Y6XGOkskxHoGswWFLF2MwdBbXBzDnmLSPGVTvf0uVDSwlt1biIJ11RWVzW81bA3WJ2vRTLKlkwXE0kDPKFNKFkllxz8zz7GD4SCd7T/SPk/Ws1WW7uRa4c+7oE4lj8LKSzrUvOuaXYfxeCFpf0IqOK7A2Ss0m8Zyyqc8kRJeYZjgeNPKuzW0kH4D5taE2aDEdDKEgCo5E2zUA5IZzKc1UsLxYmJNg8J3DbkISTVoSH4SZTqoXNFdL3AMFoxgRDbo7cUyQmaewJEdXXIwwRN4gKWmiYXKi/ek8PndH5vEArLTQFAHPzQAlxFl+jdr7y2HMcljsFsyHlbs0QyVExJCk4LjDzeJoKXSDQRCI
   template:
     metadata:
-      name: argocd-notifications-secret
+      name: argocd-discord-webhook
       namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: argocd
