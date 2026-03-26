@@ -75,7 +75,7 @@ data:
                 },
                 {
                   "name": "Channel",
-                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "value": "main",
                   "inline": true
                 }
               ],
@@ -103,7 +103,7 @@ data:
                 },
                 {
                   "name": "Channel",
-                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "value": "infra",
                   "inline": true
                 }
               ],
@@ -134,7 +134,7 @@ data:
                 },
                 {
                   "name": "Channel",
-                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "value": "main",
                   "inline": true
                 }
               ],
@@ -162,7 +162,7 @@ data:
                 },
                 {
                   "name": "Channel",
-                  "value": "{{index .app.metadata.labels \"notifications.argocd/channel\"}}",
+                  "value": "infra",
                   "inline": true
                 }
               ],
