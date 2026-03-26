@@ -7,7 +7,7 @@ metadata:
 data:
   # Discord webhook service configuration
   service.webhook.discord: |
-    url: $discord-webhook-url
+    url: $argocd-notifications-secret.discord-webhook-url
     headers:
       - name: Content-Type
         value: application/json
