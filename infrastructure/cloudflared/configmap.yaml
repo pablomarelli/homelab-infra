@@ -5,7 +5,7 @@ metadata:
   namespace: infrastructure
 data:
   config.yaml: |
-    tunnel: adcf61e7-1183-4ff4-9f77-b25fa8fed5fd
+    tunnel: 4d2e246b-8c39-49cd-b89c-5ba89d0fd598
     credentials-file: /etc/cloudflared/credentials.json
     ingress:
       - hostname: "*.pablomarelli.dev"

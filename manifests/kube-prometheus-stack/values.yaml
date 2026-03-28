@@ -70,6 +70,8 @@ prometheus:
 # Alertmanager configuration (Discord will be added in Phase 8)
 alertmanager:
   alertmanagerSpec:
+    secrets:
+      - alertmanager-discord-webhook
     storage:
       volumeClaimTemplate:
         spec:
@@ -106,7 +108,7 @@ alertmanager:
       - name: 'null'
       - name: 'discord'
         discord_configs:
-          - webhook_url: 'https://discord.com/api/webhooks/1478831742025596951/8CWQMwlb3PLQTdxutqE-XBHudR-PX2y8Tf1jdxARhbWcs8axuQP3YWg6YZ9och3vrzPK'
+          - webhook_url_file: '/etc/alertmanager/secrets/alertmanager-discord-webhook/webhook-url'
             send_resolved: true
     templates: []
 # Node exporter for host metrics
