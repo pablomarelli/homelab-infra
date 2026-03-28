@@ -3,6 +3,7 @@
 secret.yaml
 secrets.yaml
 *-secret.yaml
+credentials.json
 
 # Environment files
 .env
