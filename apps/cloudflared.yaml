@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflared
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: infra
+    notifications.argocd/profile: critical
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: infrastructure/cloudflared
+    directory:
+      exclude: credentials.sealed.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infrastructure
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
