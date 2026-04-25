@@ -47,3 +47,7 @@ monitoring:
 # Disable test pod
 test:
   enabled: false
+chunksCache:
+  allocatedMemory: 512
+resultsCache:
+  allocatedMemory: 128
