@@ -51,7 +51,8 @@ redis:
   enabled: true
   image:
     repository: bitnami/redis
-    tag: latest
+    tag: 7.2.3-debian-11-r2
+    digest: sha256:5179ef5fcc0aee9b3a16e8030ea7b1a81f94033c06e1676c0c4b18c237de2e82
   master:
     resources:
       requests:
