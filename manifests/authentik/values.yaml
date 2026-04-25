@@ -47,17 +47,3 @@ worker:
       value: "authentik"
 postgresql:
   enabled: false
-redis:
-  enabled: true
-  image:
-    repository: bitnami/redis
-    tag: 7.2.3-debian-11-r2
-    digest: sha256:5179ef5fcc0aee9b3a16e8030ea7b1a81f94033c06e1676c0c4b18c237de2e82
-  master:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-      limits:
-        cpu: 200m
-        memory: 128Mi
