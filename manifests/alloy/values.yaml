@@ -74,7 +74,7 @@ alloy:
         // Normalize level field (handle different naming conventions)
         stage.template {
           source   = "level"
-          template = "{{ or .Value .severity | ToLower }}"
+          template = "{{ `{{ or .Value .severity | ToLower }}` }}"
         }
         // Map common level variations to standard levels
         stage.replace {
