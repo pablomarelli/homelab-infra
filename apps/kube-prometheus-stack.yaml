@@ -28,3 +28,15 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+  ignoreDifferences:
+    - kind: Secret
+      name: kube-prometheus-stack-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data/admin-password
+    - group: apps
+      kind: Deployment
+      name: kube-prometheus-stack-grafana
+      namespace: monitoring
+      jqPathExpressions:
+        - .spec.template.metadata.annotations."checksum/secret"
