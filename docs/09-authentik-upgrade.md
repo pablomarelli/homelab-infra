@@ -4,12 +4,12 @@ Authentik must be upgraded in release-train hops, not directly from `2024.2.2` t
 
 ## Current Hop
 
-The repo is prepared for the first hop:
+The repo is prepared for the second hop:
 
 | Component | From | To |
 |---|---:|---:|
-| `apps/authentik.yaml` chart | `2024.2.2` | `2024.4.2` |
-| `manifests/authentik-outpost/outpost-deployment.yaml` image | `2024.2.2` | `2024.4.2` |
+| `apps/authentik.yaml` chart | `2024.4.2` | `2024.6.4` |
+| `manifests/authentik-outpost/outpost-deployment.yaml` image | `2024.4.2` | `2024.6.4` |
 
 ## Published Chart Hop Sequence
 
