@@ -69,7 +69,7 @@ alloy:
             message = "message",
             severity = "severity",
           }
-          drop_malformed = true
+          drop_malformed = false
         }
         // Normalize level field (handle different naming conventions)
         stage.template {
