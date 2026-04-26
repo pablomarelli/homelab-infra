@@ -18,6 +18,21 @@ spec:
           image: ghcr.io/umami-software/umami:3.1.0
           ports:
             - containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /api/heartbeat
+              port: 3000
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /api/heartbeat
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
           env:
             - name: DATABASE_URL
               valueFrom:
