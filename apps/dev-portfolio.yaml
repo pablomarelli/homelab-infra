@@ -10,7 +10,7 @@ spec:
   project: default
   source: 
     repoURL: https://github.com/pablomarelli/homelab-infra.git
-    targetRevision: HEAD
+    targetRevision: main
     path: manifests/dev-portfolio
   destination:
     server: https://kubernetes.default.svc

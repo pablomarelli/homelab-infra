@@ -18,7 +18,7 @@ spec:
           - $values/manifests/authentik/values.yaml
     # Values file from your infra repo
     - repoURL: https://github.com/pablomarelli/homelab-infra.git
-      targetRevision: HEAD
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
