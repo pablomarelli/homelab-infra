@@ -62,6 +62,7 @@ No ports are exposed on the host. All external traffic flows through a [Cloudfla
 | [06 — Infrastructure / DNS](docs/06-infrastructure.md) | Cloudflare Tunnel and OpenTofu DNS |
 | [07 — Monitoring & Alerting](docs/07-monitoring.md) | PLG stack, Alloy, Alertmanager, Discord |
 | [08 — Backups](docs/08-backups.md) | PostgreSQL and Uptime Kuma backup strategy |
+| [10 — Node Topology](docs/10-node-topology.md) | Multi-node roles, labels, taints, and placement policy |
 
 ## Repository layout
 

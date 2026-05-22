@@ -13,6 +13,8 @@ spec:
       labels:
         app: uptime-kuma
     spec:
+      nodeSelector:
+        homelab/power: battery-backed
       containers:
         - name: uptime-kuma
           image: louislam/uptime-kuma:2.2.1
