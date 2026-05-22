@@ -138,6 +138,9 @@ spec:
   routes:
     - match: Host(`auth.pablomarelli.dev`)
       kind: Rule
+      middlewares:
+        - name: external-https-headers
+          namespace: monitoring
       services:
         - name: authentik-server
           port: 80
