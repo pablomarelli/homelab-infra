@@ -22,6 +22,8 @@ spec:
           env:
             - name: AUTHENTIK_HOST
               value: "http://authentik-server.monitoring.svc.cluster.local"
+            - name: AUTHENTIK_HOST_BROWSER
+              value: "https://auth.pablomarelli.dev"
             - name: AUTHENTIK_INSECURE
               value: "true"
             - name: AUTHENTIK_TOKEN
