@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dozzle
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`dozzle.pablomarelli.dev`)
+      kind: Rule
+      middlewares:
+        - name: authentik-auth
+          namespace: monitoring
+      services:
+        - name: dozzle
+          port: 8080

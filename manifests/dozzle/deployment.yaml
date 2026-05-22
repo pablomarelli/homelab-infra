@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dozzle
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dozzle
+  template:
+    metadata:
+      labels:
+        app: dozzle
+    spec:
+      serviceAccountName: dozzle
+      nodeSelector:
+        homelab/node-role: worker
+        homelab/power: non-ups
+      tolerations:
+        - key: homelab/power
+          operator: Equal
+          value: non-ups
+          effect: NoSchedule
+      containers:
+        - name: dozzle
+          image: amir20/dozzle:v10.6.0
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DOZZLE_MODE
+              value: k8s
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

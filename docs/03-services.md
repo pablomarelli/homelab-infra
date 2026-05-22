@@ -28,6 +28,7 @@ Full list of services running in the cluster, their namespaces, public URLs, and
 | Alertmanager | `monitoring` | — | — | Routes alerts to Discord |
 | Loki | `monitoring` | — | — | Log storage; no public UI |
 | Grafana Alloy | `monitoring` | — | — | DaemonSet log collector |
+| Dozzle | `monitoring` | `dozzle.pablomarelli.dev` | Authentik forward auth | Live Kubernetes pod log viewer |
 | Uptime Kuma | `monitoring` | `status.pablomarelli.dev` | Mixed (see below) | Public status page + protected admin |
 | Umami | `monitoring` | `analytics.pablomarelli.dev` | Umami native | Web analytics |
 
