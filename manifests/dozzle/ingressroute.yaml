@@ -10,6 +10,8 @@ spec:
     - match: Host(`dozzle.pablomarelli.dev`)
       kind: Rule
       middlewares:
+        - name: external-https-headers
+          namespace: monitoring
         - name: authentik-auth
           namespace: monitoring
       services:
