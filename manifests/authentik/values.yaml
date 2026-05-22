@@ -9,6 +9,8 @@ authentik:
     password: ""
 server:
   replicas: 1
+  nodeSelector:
+    homelab/power: battery-backed
   resources:
     requests:
       cpu: 100m
@@ -28,6 +30,14 @@ server:
       value: "authentik"
 worker:
   replicas: 1
+  nodeSelector:
+    homelab/node-role: worker
+    homelab/power: non-ups
+  tolerations:
+    - key: homelab/power
+      operator: Equal
+      value: non-ups
+      effect: NoSchedule
   resources:
     requests:
       cpu: 100m
