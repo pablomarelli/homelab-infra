@@ -105,6 +105,11 @@ alloy:
     varlog: true
 controller:
   type: daemonset
+  tolerations:
+    - key: homelab/power
+      operator: Equal
+      value: non-ups
+      effect: NoSchedule
 resources:
   requests:
     cpu: 50m
