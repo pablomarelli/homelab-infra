@@ -16,6 +16,8 @@ loki:
           period: 24h
 singleBinary:
   replicas: 1
+  nodeSelector:
+    homelab/power: battery-backed
   persistence:
     enabled: true
     size: 10Gi
@@ -49,5 +51,21 @@ test:
   enabled: false
 chunksCache:
   allocatedMemory: 512
+  nodeSelector:
+    homelab/node-role: worker
+    homelab/power: non-ups
+  tolerations:
+    - key: homelab/power
+      operator: Equal
+      value: non-ups
+      effect: NoSchedule
 resultsCache:
   allocatedMemory: 128
+  nodeSelector:
+    homelab/node-role: worker
+    homelab/power: non-ups
+  tolerations:
+    - key: homelab/power
+      operator: Equal
+      value: non-ups
+      effect: NoSchedule
