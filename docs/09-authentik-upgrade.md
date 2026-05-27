@@ -1,15 +1,15 @@
 # Authentik Upgrade Runbook
 
-Authentik must be upgraded in release-train hops, not directly from `2024.2.2` to the current release. Keep the Helm chart and the external Traefik outpost image on the same version at every hop.
+Authentik must be upgraded in release-train hops when crossing release trains. Keep the Helm chart and the external Traefik outpost image on the same version at every hop.
 
 ## Current Hop
 
-The repo is prepared for the second hop:
+The repo is prepared for the next release-train hop:
 
 | Component | From | To |
 |---|---:|---:|
-| `apps/authentik.yaml` chart | `2024.4.2` | `2024.6.4` |
-| `manifests/authentik-outpost/outpost-deployment.yaml` image | `2024.4.2` | `2024.6.4` |
+| `apps/authentik.yaml` chart | `2026.2.2` | `2026.5.0` |
+| `manifests/authentik-outpost/outpost-deployment.yaml` image | `2026.2.2` | `2026.5.0` |
 
 ## Published Chart Hop Sequence
 
@@ -27,6 +27,7 @@ Use the latest published chart patch in each release train:
 10. `2025.8.4` -> `2025.10.3`
 11. `2025.10.3` -> `2025.12.4`
 12. `2025.12.4` -> `2026.2.2`
+13. `2026.2.2` -> `2026.5.0`
 
 ## Before Each Hop
 
@@ -54,3 +55,5 @@ Use the latest published chart patch in each release train:
 - `2024.12` requires an impersonation reason by default and deprecates `AUTHENTIK_POSTGRESQL__USE_PGBOUNCER` / `AUTHENTIK_POSTGRESQL__USE_PGPOOL`. This repo does not set those variables today.
 - `2025.4` moves sessions to the database and changes reputation score limits. Expect active sessions to be invalidated during the rolling upgrade.
 - `2025.6` upgrades default embedded PostgreSQL/Redis chart dependencies, but this repo disables the embedded PostgreSQL chart and pins Redis image values explicitly.
+- `2026.5` changes the default listen address from `0.0.0.0` to `[::]`. IPv4-only environments might need explicit listen settings before syncing.
+- `2026.5` reduces worker memory usage with a Rust worker entrypoint and includes security backports. Watch worker startup and health checks after syncing.

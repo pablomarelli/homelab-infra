@@ -46,7 +46,7 @@ The job keeps the **14 most recent dumps** of each database. Older files are rem
 
 **CronJob:** `manifests/uptime-kuma/backup-cronjob.yaml`  
 **Schedule:** `30 2 * * *` — 02:30 daily  
-**Image:** `alpine:3.21`  
+**Image:** `alpine:3.23`
 **PVCs:** `uptime-kuma-data` (read-only source), `uptime-kuma-backups` (destination)
 
 ### What gets backed up
