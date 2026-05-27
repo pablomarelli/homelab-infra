@@ -30,7 +30,8 @@ Full list of services running in the cluster, their namespaces, public URLs, and
 | Grafana Alloy | `monitoring` | — | — | DaemonSet log collector |
 | Dozzle | `monitoring` | `dozzle.pablomarelli.dev` | Authentik forward auth | Live Kubernetes pod log viewer |
 | Uptime Kuma | `monitoring` | `status.pablomarelli.dev` | Mixed (see below) | Public status page + protected admin |
-| Umami | `monitoring` | `analytics.pablomarelli.dev` | Umami native | Web analytics |
+| Umami dashboard | `monitoring` | `analytics.pablomarelli.dev` | Cloudflare Access + Umami native | Private web analytics UI |
+| Umami collector | `monitoring` | `analytics-collector.pablomarelli.dev` | None (public) | Public script and event ingestion endpoint for tracked sites |
 
 ### Uptime Kuma auth split
 

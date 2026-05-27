@@ -23,7 +23,8 @@ Traefik (ingress controller, k3s default)
          ├─► Grafana          grafana.pablomarelli.dev
          ├─► Authentik        auth.pablomarelli.dev
          ├─► Uptime Kuma      status.pablomarelli.dev
-         ├─► Umami            analytics.pablomarelli.dev
+         ├─► Umami dashboard  analytics.pablomarelli.dev
+         ├─► Umami collector  analytics-collector.pablomarelli.dev
          ├─► Portfolio        portfolio.pablomarelli.dev
          ├─► Finance Manager  finance.pablomarelli.dev
          └─► Home Assistant   home.pablomarelli.dev

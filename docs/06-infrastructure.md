@@ -50,7 +50,7 @@ resource "cloudflare_record" "tunnel" {
 ### Current subdomains
 
 ```
-argocd, portfolio, finance, home, auth, status, analytics, grafana
+argocd, portfolio, finance, home, auth, status, analytics, analytics-collector, grafana, dozzle
 ```
 
 All resolve to `<tunnel-id>.cfargotunnel.com`.
