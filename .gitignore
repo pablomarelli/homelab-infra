@@ -30,3 +30,6 @@ k3s.yaml
 !*.tfvars.example
 .terraform/
 .terraform.lock.hcl
+
+# ATL
+.atl/
