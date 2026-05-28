@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ntfy-config
+  namespace: monitoring
+data:
+  NTFY_BASE_URL: https://ntfy.pablomarelli.dev
+  NTFY_LISTEN_HTTP: :80
+  NTFY_BEHIND_PROXY: "true"
+  NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+  NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+  NTFY_AUTH_DEFAULT_ACCESS: deny-all
+  NTFY_ENABLE_LOGIN: "true"
+  NTFY_AUTH_ACCESS: ntfy-publisher:*:write-only,ntfy-subscriber:*:read-only

@@ -221,6 +221,21 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
+  name: ntfy
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`ntfy.pablomarelli.dev`)
+      kind: Rule
+      services:
+        - name: ntfy
+          port: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
   name: umami
   namespace: monitoring
 spec:

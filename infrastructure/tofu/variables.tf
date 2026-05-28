@@ -19,5 +19,5 @@ variable "tunnel_id" {
 variable "subdomains" {
   description = "Subdomains to route through the tunnel"
   type        = list(string)
-  default     = ["argocd", "portfolio", "finance", "home", "auth", "status", "analytics", "analytics-collector", "grafana", "dozzle"]
+  default     = ["argocd", "portfolio", "finance", "home", "auth", "status", "analytics", "analytics-collector", "grafana", "dozzle", "ntfy"]
 }

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ntfy
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ntfy
+  template:
+    metadata:
+      labels:
+        app: ntfy
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: pablo-ideapad-l340-17irh-gaming
+        homelab/power: battery-backed
+      containers:
+        - name: ntfy
+          image: binwiederhier/ntfy:v2.14.0
+          args:
+            - serve
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: ntfy-config
+            - secretRef:
+                name: ntfy-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/ntfy
+          startupProbe:
+            httpGet:
+              path: /v1/health
+              port: 80
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "25m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ntfy-data

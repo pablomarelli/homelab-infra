@@ -29,6 +29,7 @@ Full list of services running in the cluster, their namespaces, public URLs, and
 | Loki | `monitoring` | — | — | Log storage; no public UI |
 | Grafana Alloy | `monitoring` | — | — | DaemonSet log collector |
 | Dozzle | `monitoring` | `dozzle.pablomarelli.dev` | Authentik forward auth | Live Kubernetes pod log viewer |
+| ntfy | `monitoring` | `ntfy.pablomarelli.dev` | ntfy native token/user auth | Private push notification service |
 | Uptime Kuma | `monitoring` | `status.pablomarelli.dev` | Mixed (see below) | Public status page + protected admin |
 | Umami dashboard | `monitoring` | `analytics.pablomarelli.dev` | Cloudflare Access + Umami native | Private web analytics UI |
 | Umami collector | `monitoring` | `analytics-collector.pablomarelli.dev` | None (public) | Public script and event ingestion endpoint for tracked sites |
