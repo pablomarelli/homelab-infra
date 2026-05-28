@@ -10,7 +10,10 @@ docker run --rm -it binwiederhier/ntfy:v2.14.0 user hash
 docker run --rm binwiederhier/ntfy:v2.14.0 token generate
 ```
 
-Store these fields in the 1Password item named `ntfy`:
+Store these fields in the 1Password item named `ntfy` in the `homelab-secrets`
+vault. The ExternalSecret uses 1Password SDK references in the format
+`<item>/<field>`, so `ntfy/NTFY_AUTH_USERS` means item `ntfy`, field
+`NTFY_AUTH_USERS`.
 
 ```text
 NTFY_AUTH_USERS=ntfy-publisher:<publisher-bcrypt-hash>:user,ntfy-subscriber:<subscriber-bcrypt-hash>:user
@@ -21,7 +24,7 @@ The committed ACL grants `ntfy-publisher` write-only access to all topics and
 `ntfy-subscriber` read-only access to all topics. Anonymous access is denied by
 `NTFY_AUTH_DEFAULT_ACCESS=deny-all`.
 
-If you use the 1Password CLI, the item can be created like this:
+If you use the 1Password CLI, create the item like this:
 
 ```bash
 op item create \
