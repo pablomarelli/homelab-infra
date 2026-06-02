@@ -23,7 +23,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: dev-portfolio
-          image: ghcr.io/pablomarelli/dev-portfolio:2026.5.25
+          image: ghcr.io/pablomarelli/dev-portfolio:2026.5.26
           ports:
             - containerPort: 80
           volumeMounts:
