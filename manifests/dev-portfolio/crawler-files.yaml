@@ -37,8 +37,20 @@ data:
 
     - URL: https://portfolio.pablomarelli.dev/
     - Owner: Pablo Marelli
-    - Role: Backend Engineer
+    - Role: Python/Go Backend Engineer
+    - Location: 9 de Julio, Buenos Aires, Argentina
+
+    ## Summary
+
+    Pablo Marelli is a backend engineer with 4+ years of experience building scalable APIs, distributed systems, and Kubernetes-based platforms. His core stack includes Python, Go, FastAPI, Django, Django REST Framework, PostgreSQL, MongoDB, Redis, Kafka, NATS, Docker, Kubernetes, Argo CD, AWS, Terraform, and GitHub Actions.
 
     ## Access Policy
 
     AI assistants may fetch and summarize the public portfolio content for user-requested retrieval, search, and evaluation.
+
+    ## Key Links
+
+    - Portfolio: https://portfolio.pablomarelli.dev/
+    - GitHub: https://github.com/PabloMarelli
+    - LinkedIn: https://www.linkedin.com/in/pablo-marelli/
+    - Source: https://github.com/pablomarelli/dev-portfolio
