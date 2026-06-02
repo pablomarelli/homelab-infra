@@ -26,6 +26,15 @@ spec:
           image: ghcr.io/pablomarelli/dev-portfolio:2026.5.25
           ports:
             - containerPort: 80
+          volumeMounts:
+            - name: crawler-files
+              mountPath: /usr/share/nginx/html/robots.txt
+              subPath: robots.txt
+              readOnly: true
+            - name: crawler-files
+              mountPath: /usr/share/nginx/html/llms.txt
+              subPath: llms.txt
+              readOnly: true
           resources:
             requests:
               memory: "128Mi"
@@ -33,3 +42,7 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "500m"
+      volumes:
+        - name: crawler-files
+          configMap:
+            name: dev-portfolio-crawler-files

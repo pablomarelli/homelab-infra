@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dev-portfolio-crawler-files
+  namespace: portfolio
+data:
+  robots.txt: |
+    User-agent: *
+    Allow: /
+
+    User-agent: GPTBot
+    Allow: /
+
+    User-agent: ChatGPT-User
+    Allow: /
+
+    User-agent: OAI-SearchBot
+    Allow: /
+
+    User-agent: ClaudeBot
+    Allow: /
+
+    User-agent: Claude-User
+    Allow: /
+
+    User-agent: PerplexityBot
+    Allow: /
+
+    Sitemap: https://portfolio.pablomarelli.dev/sitemap.xml
+
+  llms.txt: |
+    # Pablo Marelli Portfolio
+
+    This site is intended to be readable by AI assistants, search engines, and other automated agents.
+
+    ## Site
+
+    - URL: https://portfolio.pablomarelli.dev/
+    - Owner: Pablo Marelli
+    - Role: Backend Engineer
+
+    ## Access Policy
+
+    AI assistants may fetch and summarize the public portfolio content for user-requested retrieval, search, and evaluation.
