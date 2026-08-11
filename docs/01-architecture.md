@@ -122,6 +122,7 @@ Grafana is configured with Authentik as its OAuth2 provider directly in the Helm
 | `monitoring` | Prometheus, Grafana, Loki, Alloy, Authentik, Uptime Kuma, Umami, PostgreSQL |
 | `portfolio` | dev-portfolio app |
 | `finance` | finance-manager app |
+| `forgejo` | Forgejo Git hosting |
 | `home-assistant` | Home Assistant app |
 
 All namespaces are pre-declared in `bootstrap/namespaces.yaml` and must exist before ArgoCD attempts to deploy into them.

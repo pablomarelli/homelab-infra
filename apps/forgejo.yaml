@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: forgejo
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: infra
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/forgejo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: forgejo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

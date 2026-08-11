@@ -27,7 +27,8 @@ Traefik (ingress controller, k3s default)
          ├─► Umami collector  analytics-collector.pablomarelli.dev
          ├─► Portfolio        portfolio.pablomarelli.dev
          ├─► Finance Manager  finance.pablomarelli.dev
-         └─► Home Assistant   home.pablomarelli.dev
+         ├─► Forgejo           git.pablomarelli.dev
+         └─► Home Assistant    home.pablomarelli.dev
 ```
 
 No ports are exposed on the host. All external traffic flows through a [Cloudflare Tunnel](docs/06-infrastructure.md) — no firewall rules, no port forwarding.
@@ -38,6 +39,7 @@ No ports are exposed on the host. All external traffic flows through a [Cloudfla
 |---|---|
 | Orchestration | Kubernetes (k3s, single-node) |
 | GitOps | ArgoCD (App-of-Apps) |
+| Git hosting | Forgejo |
 | Ingress | Traefik |
 | Tunneling | Cloudflare Tunnel (`cloudflared`) |
 | DNS / IaC | OpenTofu + Cloudflare provider |
@@ -62,7 +64,7 @@ No ports are exposed on the host. All external traffic flows through a [Cloudfla
 | [05 — Secret Management](docs/05-secret-management.md) | ESO + 1Password and Sealed Secrets workflows |
 | [06 — Infrastructure / DNS](docs/06-infrastructure.md) | Cloudflare Tunnel and OpenTofu DNS |
 | [07 — Monitoring & Alerting](docs/07-monitoring.md) | PLG stack, Alloy, Alertmanager, Discord |
-| [08 — Backups](docs/08-backups.md) | PostgreSQL and Uptime Kuma backup strategy |
+| [08 — Backups](docs/08-backups.md) | PostgreSQL, Uptime Kuma, and Forgejo backup strategy |
 | [10 — Node Topology](docs/10-node-topology.md) | Multi-node roles, labels, taints, and placement policy |
 | [11 — Argo CD Upgrade](docs/11-argocd-upgrade.md) | Safe upgrade process for the generated Argo CD bootstrap manifest |
 

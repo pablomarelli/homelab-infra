@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: forgejo-backup
+  namespace: forgejo
+spec:
+  schedule: "15 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            homelab/power: battery-backed
+          securityContext:
+            fsGroup: 1000
+          containers:
+            - name: forgejo-backup
+              image: codeberg.org/forgejo/forgejo:15.0.6
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_DIR=/backups
+
+                  echo "Starting Forgejo backup at $TIMESTAMP"
+                  forgejo dump \
+                    --config /data/gitea/conf/app.ini \
+                    --file "$BACKUP_DIR/forgejo_$TIMESTAMP.tar.gz" \
+                    --type tar.gz \
+                    --tempdir /tmp \
+                    --skip-log
+
+                  echo "Cleaning up old backups..."
+                  cd "$BACKUP_DIR"
+                  ls -t forgejo_*.tar.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
+
+                  echo "Backup job completed"
+                  ls -lh "$BACKUP_DIR"
+              volumeMounts:
+                - name: source
+                  mountPath: /data
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: source
+              persistentVolumeClaim:
+                claimName: forgejo-data
+            - name: backups
+              persistentVolumeClaim:
+                claimName: forgejo-backups

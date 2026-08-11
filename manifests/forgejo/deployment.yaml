@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: forgejo
+    spec:
+      nodeSelector:
+        homelab/power: battery-backed
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:15.0.6
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: USER_UID
+              value: "1000"
+            - name: USER_GID
+              value: "1000"
+            - name: FORGEJO__server__DOMAIN
+              value: git.pablomarelli.dev
+            - name: FORGEJO__server__ROOT_URL
+              value: https://git.pablomarelli.dev/
+            - name: FORGEJO__server__HTTP_PORT
+              value: "3000"
+            - name: FORGEJO__server__DISABLE_SSH
+              value: "true"
+            - name: FORGEJO__database__DB_TYPE
+              value: sqlite3
+            - name: FORGEJO__service__REQUIRE_SIGNIN_VIEW
+              value: "true"
+            - name: FORGEJO__service__DISABLE_REGISTRATION
+              value: "true"
+            - name: FORGEJO__repository__DEFAULT_PRIVATE
+              value: private
+            - name: FORGEJO__repository__DEFAULT_PUSH_CREATE_PRIVATE
+              value: "true"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: forgejo-data

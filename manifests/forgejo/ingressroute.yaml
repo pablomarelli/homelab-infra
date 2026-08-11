@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`git.pablomarelli.dev`)
+      kind: Rule
+      middlewares:
+        - name: external-https-headers
+          namespace: monitoring
+      services:
+        - name: forgejo
+          port: 3000
