@@ -40,6 +40,8 @@ spec:
               value: "true"
             - name: FORGEJO__database__DB_TYPE
               value: sqlite3
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
             - name: FORGEJO__service__REQUIRE_SIGNIN_VIEW
               value: "true"
             - name: FORGEJO__service__DISABLE_REGISTRATION
