@@ -27,7 +27,7 @@ The tunnel credentials (the token that authenticates `cloudflared` to Cloudflare
 
 ## DNS — OpenTofu
 
-DNS records are managed in `infrastructure/tofu/`. The configuration creates one CNAME record per subdomain, all pointing at the tunnel.
+DNS records are managed in `infrastructure/tofu/`. Application subdomains point at the tunnel, while originless endpoints such as the dotfiles installer are handled directly at Cloudflare's edge.
 
 ### How it works
 
@@ -50,10 +50,10 @@ resource "cloudflare_record" "tunnel" {
 ### Current subdomains
 
 ```
-argocd, portfolio, finance, home, auth, status, analytics, analytics-collector, grafana, dozzle
+argocd, portfolio, finance, home, auth, status, analytics, analytics-collector, grafana, dozzle, ntfy, git
 ```
 
-All resolve to `<tunnel-id>.cfargotunnel.com`.
+All application subdomains resolve to `<tunnel-id>.cfargotunnel.com`. The proxied `dotfiles` record uses a reserved placeholder address and a Cloudflare Single Redirect, so requests never reach an origin or the cluster.
 
 ### Adding a new subdomain
 
@@ -81,7 +81,7 @@ This creates the DNS record. The subdomain will be routed through the tunnel to 
 | File | Purpose |
 |---|---|
 | `infrastructure/tofu/main.tf` | Cloudflare provider configuration |
-| `infrastructure/tofu/dns.tf` | CNAME records for all subdomains |
+| `infrastructure/tofu/dns.tf` | Tunnel DNS records and edge redirect rules |
 | `infrastructure/tofu/variables.tf` | Domain, tunnel ID, subdomain list |
 | `infrastructure/tofu/tofu.env.op` | Safe 1Password references used by the Tofu wrapper |
 | `scripts/tofu` | Runs OpenTofu with credentials injected from 1Password |

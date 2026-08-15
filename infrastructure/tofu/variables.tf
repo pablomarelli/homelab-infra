@@ -1,5 +1,5 @@
 variable "cloudflare_api_token" {
-  description = "Cloudflare API token with DNS edit permissions"
+  description = "Cloudflare API token with DNS and zone rulesets edit permissions"
   type        = string
   sensitive   = true
 }
@@ -19,5 +19,5 @@ variable "tunnel_id" {
 variable "subdomains" {
   description = "Subdomains to route through the tunnel"
   type        = list(string)
-  default     = ["argocd", "portfolio", "finance", "home", "auth", "status", "analytics", "analytics-collector", "grafana", "dozzle", "ntfy", "dotfiles", "git"]
+  default     = ["argocd", "portfolio", "finance", "home", "auth", "status", "analytics", "analytics-collector", "grafana", "dozzle", "ntfy", "git"]
 }
