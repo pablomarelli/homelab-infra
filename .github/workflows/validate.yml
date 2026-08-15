@@ -1,0 +1,36 @@
+name: Validate infrastructure
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1
+        with:
+          tofu_version: 1.10.0
+
+      - name: Terraform format and validation
+        run: |
+          tofu fmt -check infrastructure/tofu/variables.tf
+          tofu -chdir=infrastructure/tofu init -backend=false -input=false
+          tofu -chdir=infrastructure/tofu validate
+
+      - name: Kubernetes manifest dry-run and redirect contract
+        run: |
+          python3 -m pip install --disable-pip-version-check PyYAML==6.0.2
+          kubectl apply --dry-run=client --validate=false -f manifests/traefik
+          bash scripts/validate-dotfiles-redirect.sh

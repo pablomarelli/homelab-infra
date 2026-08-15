@@ -1,0 +1,43 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dotfiles-install-redirect
+  namespace: monitoring
+spec:
+  redirectRegex:
+    regex: "^https?://dotfiles\\.pablomarelli\\.dev/?$"
+    replacement: "https://raw.githubusercontent.com/pablomarelli/dotfiles/main/install.sh"
+    permanent: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotfiles-redirect-sink
+  namespace: monitoring
+spec:
+  type: ExternalName
+  externalName: example.invalid
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dotfiles-install
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`dotfiles.pablomarelli.dev`)
+      kind: Rule
+      middlewares:
+        - name: dotfiles-install-redirect
+          namespace: monitoring
+      services:
+        # Redirect-only route: middleware should answer before this sink is used.
+        # Use a dedicated sink instead of coupling the route to an unrelated app.
+        - name: dotfiles-redirect-sink
+          port: 80

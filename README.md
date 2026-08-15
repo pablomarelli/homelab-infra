@@ -25,13 +25,30 @@ Traefik (ingress controller, k3s default)
          ├─► Uptime Kuma      status.pablomarelli.dev
          ├─► Umami dashboard  analytics.pablomarelli.dev
          ├─► Umami collector  analytics-collector.pablomarelli.dev
+         ├─► Dotfiles         dotfiles.pablomarelli.dev → raw GitHub install.sh
          ├─► Portfolio        portfolio.pablomarelli.dev
          ├─► Finance Manager  finance.pablomarelli.dev
          ├─► Forgejo           git.pablomarelli.dev
          └─► Home Assistant    home.pablomarelli.dev
 ```
 
-No ports are exposed on the host. All external traffic flows through a [Cloudflare Tunnel](docs/06-infrastructure.md) — no firewall rules, no port forwarding.
+No ports are exposed on the host. All external traffic flows through a [Cloudflare Tunnel](docs/06-infrastructure.md) — no firewall rules, no port forwarding. `dotfiles.pablomarelli.dev` is intentionally a redirect-only Traefik route so the public bootstrap command can stay short while the installer remains sourced from GitHub. The route uses a dedicated `ExternalName` sink service because the redirect middleware should respond before any backend is used, and it must not depend on an unrelated app service.
+
+## Dotfiles redirect rollout
+
+1. Merge and publish `install.sh` in `https://github.com/pablomarelli/dotfiles` first.
+2. Confirm the raw URL exists: `https://raw.githubusercontent.com/pablomarelli/dotfiles/main/install.sh`.
+3. Merge/apply this infrastructure change so Cloudflare DNS and Traefik redirect are reconciled.
+4. Validate `curl -fsSL https://dotfiles.pablomarelli.dev | sh` from a disposable environment.
+
+The public endpoint may 404 until the dotfiles repository change is published. This repository does not currently have an established declarative Uptime Kuma monitor convention for individual public URLs; add a `dotfiles.pablomarelli.dev` content/availability monitor as a follow-up through the existing Uptime Kuma UI/export workflow.
+
+Rollback/fix-forward:
+
+- If the raw installer URL is missing or broken, do not apply this infra change yet; publish a dotfiles fix first.
+- If DNS/Traefik rollout fails, remove `dotfiles` from `infrastructure/tofu/variables.tf` and remove `manifests/traefik/dotfiles-redirect.yaml`, then reconcile through the normal GitOps/OpenTofu path.
+- If `main` points to a bad installer after rollout, either revert/fix the dotfiles commit or temporarily change the redirect replacement to a known-good raw commit URL, validate it, and then reconcile.
+- If the route causes unexpected ingress behavior, revert this infra change; it is isolated to the `dotfiles` DNS record and `dotfiles-redirect.yaml` manifest.
 
 ## Stack
 
