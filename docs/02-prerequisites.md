@@ -98,12 +98,12 @@ ArgoCD will discover all `apps/*.yaml` files and begin syncing each service.
 
 ### 6. Apply DNS infrastructure
 
+Create the private R2 state bucket and 1Password items described in
+[Infrastructure / DNS](06-infrastructure.md#opentofu-state-and-credentials), then run:
+
 ```bash
-cd infrastructure/tofu
-cp terraform.tfvars.example terraform.tfvars
-# Fill in your Cloudflare API token and tunnel ID
-tofu init
-tofu apply
+./scripts/tofu init
+./scripts/tofu apply
 ```
 
 See [Infrastructure / DNS](06-infrastructure.md) for details.

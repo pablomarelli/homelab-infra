@@ -68,9 +68,8 @@ variable "subdomains" {
 2. Apply:
 
 ```bash
-cd infrastructure/tofu
-tofu plan   # verify the diff
-tofu apply
+./scripts/tofu plan   # verify the diff
+./scripts/tofu apply
 ```
 
 This creates the DNS record. The subdomain will be routed through the tunnel to Traefik — you still need to add an `IngressRoute` to route it to the correct service. See [Adding a Service](04-adding-a-service.md).
@@ -84,14 +83,55 @@ This creates the DNS record. The subdomain will be routed through the tunnel to 
 | `infrastructure/tofu/main.tf` | Cloudflare provider configuration |
 | `infrastructure/tofu/dns.tf` | CNAME records for all subdomains |
 | `infrastructure/tofu/variables.tf` | Domain, tunnel ID, subdomain list |
-| `infrastructure/tofu/terraform.tfvars.example` | Template for local `terraform.tfvars` (not committed) |
+| `infrastructure/tofu/tofu.env.op` | Safe 1Password references used by the Tofu wrapper |
+| `scripts/tofu` | Runs OpenTofu with credentials injected from 1Password |
 | `manifests/infrastructure/cloudflared/configmap.yaml` | `cloudflared` routing config |
 
-### Required variables (`terraform.tfvars`)
+### OpenTofu state and credentials
 
-```hcl
-cloudflare_api_token = "<token-with-dns-edit-permissions>"
+OpenTofu stores its state in the private R2 bucket `homelab-opentofu-state`.
+Create this bucket manually in the Cloudflare dashboard so it remains available
+independently of the state it stores. Do not enable an `r2.dev` URL or attach a
+public custom domain.
+
+Create the bucket and its credentials in the Cloudflare dashboard:
+
+1. Open **Storage & databases > R2 > Overview** and create the Standard storage
+   bucket `homelab-opentofu-state`.
+2. Open **Manage API Tokens** and select **Create User API token**.
+3. Grant **Object Read & Write**, apply it only to
+   `homelab-opentofu-state`, and create the token.
+4. Copy the Access Key ID, Secret Access Key, and S3 endpoint shown by
+   Cloudflare. The secret is only displayed once.
+
+Create the following items and fields in the `homelab-secrets` 1Password vault:
+
+| Item | Field | Value |
+|---|---|---|
+| `opentofu-r2` | `access-key-id` | R2 Access Key ID |
+| `opentofu-r2` | `secret-access-key` | R2 Secret Access Key |
+| `opentofu-r2` | `endpoint` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `cloudflare` | `api-token` | Token with DNS edit permission |
+
+The committed `tofu.env.op` file contains only references to these fields. The
+wrapper resolves them for the lifetime of each OpenTofu process:
+
+```bash
+./scripts/tofu init
+./scripts/tofu plan
+./scripts/tofu apply
 ```
+
+To migrate an existing local state after the bucket and credentials are ready:
+
+```bash
+cp infrastructure/tofu/terraform.tfstate /path/to/a/safe/terraform.tfstate.backup
+./scripts/tofu init -migrate-state
+./scripts/tofu plan
+```
+
+Only remove the local state and `terraform.tfvars` after the migrated state has
+been verified from a clean checkout.
 
 The `domain` and `tunnel_id` variables have defaults in `variables.tf` and only need to be overridden if you fork this repo for a different domain/tunnel.
 

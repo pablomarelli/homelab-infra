@@ -135,8 +135,7 @@ variable "subdomains" {
 Apply:
 
 ```bash
-cd infrastructure/tofu
-tofu apply
+./scripts/tofu apply
 ```
 
 This creates a CNAME record `my-app.pablomarelli.dev → <tunnel-id>.cfargotunnel.com`.
