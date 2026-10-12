@@ -50,7 +50,7 @@ resource "cloudflare_record" "tunnel" {
 ### Current subdomains
 
 ```
-argocd, portfolio, finance, home, auth, status, analytics, analytics-collector, grafana, dozzle, ntfy, git
+argocd, portfolio, finance, home, auth, status, analytics, analytics-collector, grafana, dozzle, ntfy, git, share
 ```
 
 All application subdomains resolve to `<tunnel-id>.cfargotunnel.com`. The proxied `dotfiles` record uses a reserved placeholder address and a Cloudflare Single Redirect, so requests never reach an origin or the cluster.

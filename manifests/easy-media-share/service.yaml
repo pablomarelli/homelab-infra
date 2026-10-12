@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: easy-media-share
+  namespace: media-share
+  labels:
+    app.kubernetes.io/name: easy-media-share
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: easy-media-share
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

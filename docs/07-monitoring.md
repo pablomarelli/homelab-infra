@@ -122,10 +122,10 @@ Dashboards are stored as `ConfigMap` resources in `manifests/grafana-dashboards/
 
 | Dashboard | File | Purpose |
 |---|---|---|
-| Application logs | `app-logs-dashboard.yaml` | Loki logs for `portfolio`, `finance`, `home-assistant` namespaces |
-| Error overview | `error-overview-dashboard.yaml` | Error-level log aggregation across all namespaces |
-| Infrastructure logs | `infra-logs-dashboard.yaml` | Logs from the `infrastructure` namespace |
-| Observability logs | `observability-logs-dashboard.yaml` | Logs from the `monitoring` namespace |
+| Application logs | `configmap-application-logs.yaml` | Loki logs for `portfolio`, `finance`, `home-assistant`, and `media-share` namespaces |
+| Error overview | `configmap-error-overview.yaml` | Error-level log aggregation across all namespaces |
+| Infrastructure logs | `configmap-infrastructure-logs.yaml` | Logs from the `infrastructure` namespace |
+| Observability logs | `configmap-observability-logs.yaml` | Logs from the `monitoring` namespace |
 
 To add a new dashboard:
 1. Export the JSON from Grafana UI (Dashboard → Share → Export).

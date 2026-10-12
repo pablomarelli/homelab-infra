@@ -52,6 +52,7 @@ The status page uses route-level auth splitting via Traefik IngressRoutes:
 | finance-manager | `finance` | `finance.pablomarelli.dev` | App-level | `github.com/PabloMarelli/finance-manager` |
 | Forgejo | `forgejo` | `git.pablomarelli.dev` | Forgejo native | `manifests/forgejo/` |
 | Home Assistant | `home-assistant` | `home.pablomarelli.dev` | App-level | `github.com/PabloMarelli/home-assistant` |
+| Easy Media Share | `media-share` | `share.pablomarelli.dev` | Mixed: Authentik owners, public token links | `manifests/easy-media-share/` |
 
 ## Database
 

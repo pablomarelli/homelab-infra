@@ -1,0 +1,45 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-untrusted-authentik-headers
+  namespace: media-share
+spec:
+  headers:
+    customRequestHeaders:
+      X-Authentik-Uid: ""
+      X-Authentik-Username: ""
+      X-Authentik-Email: ""
+      X-Authentik-Name: ""
+      X-Authentik-Groups: ""
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: easy-media-share
+  namespace: media-share
+spec:
+  entryPoints:
+    - web
+  routes:
+    # Public share pages, downloads, static assets, and availability checks do
+    # not pass through Authentik. The application still validates share tokens.
+    - match: Host(`share.pablomarelli.dev`) && (PathPrefix(`/s/`) || PathPrefix(`/api/public/`) || PathPrefix(`/assets/`) || Path(`/sw.js`) || Path(`/api/health`))
+      kind: Rule
+      priority: 200
+      services:
+        - name: easy-media-share
+          port: 8080
+    # Every other path is owner-only. Strip client-supplied identity headers
+    # before Authentik injects its verified response headers.
+    - match: Host(`share.pablomarelli.dev`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: strip-untrusted-authentik-headers
+        - name: external-https-headers
+          namespace: monitoring
+        - name: authentik-auth
+          namespace: monitoring
+      services:
+        - name: easy-media-share
+          port: 8080

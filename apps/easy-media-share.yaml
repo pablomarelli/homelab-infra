@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: easy-media-share
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: main
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/easy-media-share
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media-share
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

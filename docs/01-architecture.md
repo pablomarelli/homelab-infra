@@ -124,6 +124,7 @@ Grafana is configured with Authentik as its OAuth2 provider directly in the Helm
 | `finance` | finance-manager app |
 | `forgejo` | Forgejo Git hosting |
 | `home-assistant` | Home Assistant app |
+| `media-share` | Easy Media Share app and retained local storage |
 
 All namespaces are pre-declared in `bootstrap/namespaces.yaml` and must exist before ArgoCD attempts to deploy into them.
 

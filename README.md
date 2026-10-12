@@ -29,7 +29,8 @@ Traefik (ingress controller, k3s default)
          ├─► Portfolio        portfolio.pablomarelli.dev
          ├─► Finance Manager  finance.pablomarelli.dev
          ├─► Forgejo           git.pablomarelli.dev
-         └─► Home Assistant    home.pablomarelli.dev
+         ├─► Home Assistant    home.pablomarelli.dev
+         └─► Easy Media Share  share.pablomarelli.dev
 ```
 
 No ports are exposed on the host. Application traffic flows through a [Cloudflare Tunnel](docs/06-infrastructure.md) — no firewall rules, no port forwarding. `dotfiles.pablomarelli.dev` is an originless Cloudflare edge redirect, so the public bootstrap command stays short while the installer remains sourced from GitHub and does not depend on the cluster.

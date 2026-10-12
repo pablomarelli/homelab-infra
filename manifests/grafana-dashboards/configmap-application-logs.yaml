@@ -28,9 +28,10 @@ data:
             "options": [
               {"text": "portfolio", "value": "portfolio", "selected": true},
               {"text": "finance", "value": "finance", "selected": false},
-              {"text": "home-assistant", "value": "home-assistant", "selected": false}
+              {"text": "home-assistant", "value": "home-assistant", "selected": false},
+              {"text": "media-share", "value": "media-share", "selected": false}
             ],
-            "query": "portfolio,finance,home-assistant"
+            "query": "portfolio,finance,home-assistant,media-share"
           },
           {
             "name": "pod",
