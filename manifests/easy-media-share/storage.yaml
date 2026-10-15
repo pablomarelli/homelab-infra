@@ -14,6 +14,8 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   capacity:
+    # Scheduling metadata only: the local directory shares the node's root disk.
+    # Actual directory usage is monitored, not limited, at 250 GiB.
     storage: 250Gi
   volumeMode: Filesystem
   accessModes:

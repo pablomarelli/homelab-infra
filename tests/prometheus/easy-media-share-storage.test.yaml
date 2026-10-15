@@ -1,0 +1,45 @@
+# Export the easy-media-share-storage PrometheusRule .spec to storage-rules.json
+# next to this file, then run: promtool test rules easy-media-share-storage.test.yaml
+rule_files:
+  - storage-rules.json
+evaluation_interval: 1m
+tests:
+  - name: Directory below 250 GiB does not alert
+    interval: 1m
+    input_series:
+      - series: 'easy_media_share_data_bytes{namespace="media-share"}'
+        values: '268435455999+0x30'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: EasyMediaShareStorage250GiB
+        exp_alerts: []
+  - name: Directory at 250 GiB alerts only after 15 minutes
+    interval: 1m
+    input_series:
+      - series: 'easy_media_share_data_bytes{namespace="media-share"}'
+        values: '268435456000+0x30'
+    alert_rule_test:
+      - eval_time: 14m
+        alertname: EasyMediaShareStorage250GiB
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: EasyMediaShareStorage250GiB
+        exp_alerts:
+          - exp_labels:
+              namespace: media-share
+              severity: warning
+            exp_annotations:
+              summary: Easy Media Share data has reached 250 GiB
+              description: The data directory uses 250GiB. This is an alert threshold, not an enforced limit; uploads can continue.
+  - name: Missing exporter alerts after 15 minutes
+    interval: 1m
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: EasyMediaShareStorageMetricsMissing
+        exp_alerts:
+          - exp_labels:
+              namespace: media-share
+              severity: warning
+            exp_annotations:
+              summary: Easy Media Share storage monitoring is missing or stale
+              description: No recent successful directory scan is available; storage threshold alerts cannot be relied on.

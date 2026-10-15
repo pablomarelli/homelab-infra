@@ -17,33 +17,54 @@ spec:
           annotations:
             summary: Easy Media Share has no available replica
             description: The easy-media-share Deployment has been unavailable for at least 10 minutes.
-        - alert: EasyMediaShareStorage70Percent
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: easy-media-share-storage
+  namespace: media-share
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: easy-media-share-storage
+      rules:
+        - alert: EasyMediaShareStorage250GiB
           expr: |
-            100 * kubelet_volume_stats_used_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"}
-              / kubelet_volume_stats_capacity_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"} >= 70
+            easy_media_share_data_bytes{namespace="media-share"} >= 250 * 1024 * 1024 * 1024
           for: 15m
           labels:
             severity: warning
           annotations:
-            summary: Easy Media Share storage is at least 70% full
-            description: Data storage usage is {{ printf "%.1f" $value }}%.
-        - alert: EasyMediaShareStorage85Percent
+            summary: Easy Media Share data has reached 250 GiB
+            description: The data directory uses {{ $value | humanize1024 }}B. This is an alert threshold, not an enforced limit; uploads can continue.
+        - alert: EasyMediaShareRootDiskSpaceLow
           expr: |
-            100 * kubelet_volume_stats_used_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"}
-              / kubelet_volume_stats_capacity_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"} >= 85
+            100 * easy_media_share_filesystem_available_bytes{namespace="media-share"}
+              / easy_media_share_filesystem_size_bytes{namespace="media-share"} < 15
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: Easy Media Share storage is at least 85% full
-            description: Data storage usage is {{ printf "%.1f" $value }}% and requires attention.
-        - alert: EasyMediaShareStorage95Percent
+            summary: Media Share worker root filesystem has less than 15% free
+            description: The shared root filesystem on homelab-desktop-01 has {{ printf "%.1f" $value }}% available; all workloads on this disk are affected.
+        - alert: EasyMediaShareRootDiskSpaceCritical
           expr: |
-            100 * kubelet_volume_stats_used_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"}
-              / kubelet_volume_stats_capacity_bytes{namespace="media-share", persistentvolumeclaim="easy-media-share-data"} >= 95
+            100 * easy_media_share_filesystem_available_bytes{namespace="media-share"}
+              / easy_media_share_filesystem_size_bytes{namespace="media-share"} < 5
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: Easy Media Share storage is at least 95% full
-            description: Data storage usage is {{ printf "%.1f" $value }}%; uploads may fail imminently.
+            summary: Media Share worker root filesystem has less than 5% free
+            description: The shared root filesystem on homelab-desktop-01 has {{ printf "%.1f" $value }}% available; uploads and other workloads may fail imminently.
+        - alert: EasyMediaShareStorageMetricsMissing
+          expr: |
+            absent(easy_media_share_storage_scan_timestamp_seconds{namespace="media-share"})
+              or (time() - easy_media_share_storage_scan_timestamp_seconds{namespace="media-share"} > 1800)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Easy Media Share storage monitoring is missing or stale
+            description: No recent successful directory scan is available; storage threshold alerts cannot be relied on.

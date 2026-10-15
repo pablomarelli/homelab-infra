@@ -7,11 +7,23 @@ Easy Media Share runs as one stateful replica on `homelab-desktop-01`. SQLite an
 Do not enable the Argo CD Application until all of these are complete:
 
 1. Publish `ghcr.io/pablomarelli/easy-media-share:2026.08.26`. The manifest assumes the GHCR package is public; configure an ESO-managed `imagePullSecret` first if it remains private.
-2. Provision a dedicated 250 GiB filesystem on `homelab-desktop-01`, mount it persistently at `/srv/easy-media-share/data`, and set its ownership to UID/GID `10001`.
+2. Create `/srv/easy-media-share/data` on `homelab-desktop-01` with ownership UID/GID `10001` and mode `0750`. It is a directory on the existing root filesystem; no formatting, partitioning, or additional mount is required.
 3. Create an Authentik proxy provider and application for `https://share.pablomarelli.dev`, then attach it to the existing Traefik outpost.
 4. Apply the Cloudflare DNS change with `./scripts/tofu plan` and `./scripts/tofu apply`.
 
-The PV and PVC use a static local volume with `Retain` reclaim policy and Argo CD prune/delete protection. The path must be a dedicated mounted filesystem rather than an ordinary directory if the 250 GiB boundary and storage alerts are to represent real capacity.
+The PV and PVC use a static local volume with `Retain` reclaim policy and Argo CD prune/delete protection. Their declared 250 GiB capacity is scheduling metadata, not a reservation or enforced limit. Uploads share the worker's root disk with the OS and other workloads.
+
+## Storage monitoring
+
+`storage-metrics.yaml` runs a separate unprivileged exporter on the same worker, mounting the data volume read-only. Every five minutes it measures allocated directory bytes with `du -sk` and filesystem capacity/free space with `df -Pk`. Prometheus scrapes its internal endpoint every minute; it is not exposed through the public ingress.
+
+- Directory usage at or above **250 GiB for 15 minutes** triggers a warning; uploads are not blocked.
+- Root filesystem available space below **15% for 10 minutes** triggers a warning, and below **5% for 5 minutes** triggers a critical alert.
+- Missing scans, or scans older than 30 minutes, trigger a warning after 15 minutes.
+
+Do not use kubelet volume percentage metrics as directory-usage measurements: this local volume shares the root filesystem. The exporter measures allocated disk usage rather than logical file size, so sparse files and filesystem overhead can differ from application-reported upload sizes.
+
+Alert tests are in `tests/prometheus/easy-media-share-storage.test.yaml`. Export the storage PrometheusRule's `.spec` as `storage-rules.json` next to a copy of that test file, then run `promtool test rules easy-media-share-storage.test.yaml` in that directory. These tests cover usage below the threshold, the exact 250 GiB threshold and 15-minute delay, and missing metrics.
 
 ## Routing
 
