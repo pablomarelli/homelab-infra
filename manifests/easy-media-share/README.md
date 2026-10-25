@@ -35,6 +35,8 @@ The following paths intentionally bypass Authentik:
 - `/sw.js`
 - `/api/health`
 
+`/outpost.goauthentik.io/*` routes directly to the Authentik outpost without forward auth so login callbacks can complete. Its higher-priority IngressRoute lives in `monitoring` alongside the outpost service, avoiding cross-namespace service references. Argo CD manages this route as part of the Easy Media Share application.
+
 All other paths use Authentik forward auth. Traefik removes client-supplied `X-Authentik-*` headers before injecting verified identity headers.
 
 The middleware resources live in `media-share`, alongside the IngressRoute, because Traefik rejects cross-namespace middleware references. The local forward-auth middleware calls the shared Authentik outpost in `monitoring` by its service DNS name; this does not require enabling Traefik's `allowCrossNamespace` option. Keep its forward-auth settings aligned with `manifests/traefik/forward-auth-middleware.yaml`.
@@ -62,11 +64,13 @@ kubectl get pv easy-media-share-data
 kubectl get pvc,pod,service,ingressroute -n media-share
 kubectl logs -n media-share deployment/easy-media-share
 curl -fsS https://share.pablomarelli.dev/api/health
+curl -i https://share.pablomarelli.dev/outpost.goauthentik.io/ping
 ```
 
 Verify the following through the public hostname:
 
 - `/` redirects an unauthenticated browser to Authentik.
+- `/outpost.goauthentik.io/ping` returns 204 without redirecting to login, and signing in returns to the owner page without a redirect loop.
 - A spoofed `X-Authentik-Uid` request cannot access `/api/me`.
 - A valid `/s/<token>` and its `/api/public/` downloads work without login.
 - Interrupted tus uploads resume successfully.

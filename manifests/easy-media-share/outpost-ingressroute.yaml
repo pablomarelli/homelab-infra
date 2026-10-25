@@ -1,0 +1,21 @@
+# Keep the route alongside the outpost service: Traefik disallows
+# cross-namespace service references. Argo CD manages this with Easy Media Share.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: easy-media-share-outpost
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    # Login callbacks must reach the outpost without forward auth, otherwise
+    # completing authentication redirects back to login indefinitely.
+    - match: Host(`share.pablomarelli.dev`) && PathPrefix(`/outpost.goauthentik.io/`)
+      kind: Rule
+      priority: 300
+      middlewares:
+        - name: external-https-headers
+      services:
+        - name: ak-outpost-traefik
+          port: 9000
