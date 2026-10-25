@@ -37,6 +37,21 @@ The following paths intentionally bypass Authentik:
 
 All other paths use Authentik forward auth. Traefik removes client-supplied `X-Authentik-*` headers before injecting verified identity headers.
 
+The middleware resources live in `media-share`, alongside the IngressRoute, because Traefik rejects cross-namespace middleware references. The local forward-auth middleware calls the shared Authentik outpost in `monitoring` by its service DNS name; this does not require enabling Traefik's `allowCrossNamespace` option. Keep its forward-auth settings aligned with `manifests/traefik/forward-auth-middleware.yaml`.
+
+### Access troubleshooting
+
+If `share.pablomarelli.dev` returns NXDOMAIN, verify public DNS with `dig @1.1.1.1 share.pablomarelli.dev`. The `share` record is already declared in `infrastructure/tofu/variables.tf`; it must also be applied to Cloudflare. Sign in to 1Password, then run `./scripts/tofu plan` and review the changes before running `./scripts/tofu apply`. Changing the machine's resolver cannot fix a missing public DNS record.
+
+To check routing independently of public DNS, send the hostname directly to the LAN Traefik address:
+
+```bash
+curl -i --resolve share.pablomarelli.dev:80:192.168.100.3 http://share.pablomarelli.dev/api/health
+curl -I --resolve share.pablomarelli.dev:80:192.168.100.3 http://share.pablomarelli.dev/
+```
+
+The health endpoint should return 200, and the owner page should redirect to Authentik rather than return Traefik's plain-text 404. If only owner pages fail, check `kubectl logs -n kube-system deployment/traefik --since=5m` for middleware errors. Deploy manifest changes through Argo CD; its automated self-heal can revert manual edits to the live IngressRoute.
+
 ## Validation
 
 After deployment:

@@ -78,7 +78,7 @@ Rollback/fix-forward:
 | [01 — Architecture](docs/01-architecture.md) | How all the pieces connect — GitOps, networking, auth |
 | [02 — Prerequisites & Setup](docs/02-prerequisites.md) | Tools needed and bootstrap sequence |
 | [03 — Services](docs/03-services.md) | Full catalog of services, namespaces, and URLs |
-| [04 — Adding a Service](docs/04-adding-a-service.md) | Step-by-step guide to onboarding a new app |
+| [04 - Adding a Service](docs/04-adding-a-service.md) | New app onboarding, including required homelab-workflows pipeline registration |
 | [05 — Secret Management](docs/05-secret-management.md) | ESO + 1Password and Sealed Secrets workflows |
 | [06 — Infrastructure / DNS](docs/06-infrastructure.md) | Cloudflare Tunnel and OpenTofu DNS |
 | [07 — Monitoring & Alerting](docs/07-monitoring.md) | PLG stack, Alloy, Alertmanager, Discord |
