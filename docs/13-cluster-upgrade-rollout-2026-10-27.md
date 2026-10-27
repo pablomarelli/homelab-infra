@@ -222,3 +222,16 @@ The user executed the server upgrade successfully. Live verification confirms th
 A new verification pod scheduled onto the control-plane node completed DNS resolution and fetched the worker-hosted Umami heartbeat through its ClusterIP, then was removed. Public portfolio, collector heartbeat, Kuma status and ntfy readiness returned HTTP 200; the protected dashboard returned HTTP 302. The real browser pageview `upgrade_check=k3s-server-1.35.9-20261027` was confirmed in PostgreSQL. All eight ntfy authorization/publish/replay/stream checks passed using topic `upgrade-verification-1793136379061`; temporary credentials were removed. All nine active Kuma monitors reported UP. Traefik's brief API-watch failures coincided with server startup; a subsequent 30-second log window was empty.
 
 The worker upgrade script is syntax-checked and staged at `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/v1.35.9/upgrade-worker.sh`. It stops on removed kubelet flags/custom feature gates or containerd templates, checks cgroup v2 and the installed version, creates a fresh configuration/binary backup, verifies the candidate, then restarts the agent after atomic replacement. Worker execution and verification remain pending.
+
+### 1.35 worker rollout verified
+
+The user executed the worker script successfully; its configuration checks passed, checksums matched, and the worker configuration/binary backup was created at `/home/pablo/k3s-backups/worker-pre-1.35.KRTUf35E/`. The agent restarted at 21:36:03 UTC.
+
+- Both nodes now report Ready on `v1.35.9+k3s1`, with containerd `2.2.7-k3s1`. API readiness and node metrics work.
+- All 22 Applications are Synced/Healthy. All non-completed pods were Running with reported containers ready.
+- A newly scheduled worker verification pod, using the existing non-UPS taint toleration, resolved service DNS and reached both control-plane ntfy readiness and worker Umami heartbeat through ClusterIP services. It completed successfully and was removed.
+- A real portfolio browser visit with query `upgrade_check=k3s-worker-1.35.9-20261027` produced one confirmed PostgreSQL pageview.
+- All eight public ntfy permissions/publish/cache/stream checks passed using topic `upgrade-verification-1793136999076`. The temporary credential file was removed.
+- Public Kuma status and analytics heartbeat returned HTTP 200; all nine active monitors reported UP.
+
+The 1.35 minor step is complete. The 1.36 review and a fresh pre-minor server backup are next; the separate Traefik security patch remains pending.
