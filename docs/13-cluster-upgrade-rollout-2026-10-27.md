@@ -235,3 +235,28 @@ The user executed the worker script successfully; its configuration checks passe
 - Public Kuma status and analytics heartbeat returned HTTP 200; all nine active monitors reported UP.
 
 The 1.35 minor step is complete. The 1.36 review and a fresh pre-minor server backup are next; the separate Traefik security patch remains pending.
+
+### 1.36 preflight started
+
+Read Kubernetes 1.36 urgent notes, deprecations/API changes and patch notes through 1.36.5, plus K3s releases 1.36.0 through 1.36.5. The target fixes early 1.36 kubelet memory-leak and server-side-apply regressions. The runtime moves from containerd 2.2.7 to 2.3.4-k3s1.36; its additional compatibility review remains pending before installation.
+
+Deployment-specific checks:
+
+- No running pod uses gitRepo, flexVolume or Portworx volumes; all current PVs use local storage. The removed gitRepo plugin and Portworx migration therefore do not affect the observed storage configuration.
+- No ResourceClaims or ResourceSlices exist. Scheduling API discovery exposes only PriorityClass, not the removed alpha Workload API. DRA granular RBAC and alpha scheduling API migration are not applicable to these observed resources.
+- No repository YAML/JSON references or live monitoring ConfigMap/PrometheusRule references were found for renamed `volume_operation_total_errors` or `etcd_bookmark_counts` metrics.
+- No live Service externalIPs/loadBalancerSourceRanges or NetworkPolicy IP blocks were found in the targeted strict-IP/CIDR validation check. This is not an exhaustive check of every possible API field.
+- Existing hosts already use cgroup v2. The backup script stops if custom containerd templates or custom control-plane component arguments/feature gates are found, for review before upgrade.
+- Downloaded the exact amd64 target, matched its published SHA256, and verified version `v1.36.5+k3s1 (3dd98cc5)`, Go 1.26.8. No installation has occurred.
+
+The syntax-checked backup-only script `/home/pablo/k3s-upgrades/pre-1.36-backup.sh` is staged on the server. Await its execution, an off-node copy and SQLite integrity verification before replacing the 1.35 binary.
+
+### 1.36 backup verified and server upgrade staged
+
+The user completed the backup script; its custom-containerd-template and component-argument checks passed. Backup `/home/pablo/k3s-backups/pre-1.36.zQruOPSK/state.tar.gz` was copied to the desktop workspace. Its SHA256 matches: `fb48f12c2809cf78f33d37bd8ee8107ed7c0713aec2838cb7724577a0d65bf84`. The extracted SQLite copy passed integrity checking with 2,447 kine rows. Both nodes remain Ready on 1.35.9 and all 22 Applications remain Synced/Healthy after restart.
+
+Read containerd 2.3.0 through 2.3.4 release notes. Relevant changes include plugin configuration migration on load, shim bootstrap changes, security/teardown fixes, NRI plugin naming/interface changes, and disabling experimental checkpoint restoration through CreateContainer by default. The rollout uses ordinary container creation, not checkpoint restore. No custom containerd templates were found on the server; the upgrade script additionally stops for nonempty standard NRI plugin/configuration directories. Post-upgrade verification must exercise new pod creation, DNS/cross-node networking, storage-backed applications and metrics rather than rely only on surviving containers.
+
+The exact 1.36.5 Traefik manifest matches the already-tested chart/image configuration (`40.1.5+up40.1.0`, 3.7.13). Candidate binary copied to `/home/pablo/k3s-upgrades/v1.36.5/`, with remote checksum/version checks passing: SHA256 `d73847bcd3c5fccef0115b372e2f9a91f3032dc84bbf71518a4617565294d313`, version `v1.36.5+k3s1 (3dd98cc5)`.
+
+The syntax-checked `upgrade-server.sh` in that directory validates the host, current version, recovery archive and binary, atomically replaces K3s and restarts its existing service. Await user execution and server verification before preparing the worker step. The matching pre-1.36 backup is the recovery baseline; do not assume a binary-only minor downgrade restores datastore/runtime state.
