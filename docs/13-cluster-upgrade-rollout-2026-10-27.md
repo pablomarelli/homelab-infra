@@ -268,3 +268,16 @@ The user completed the server upgrade. The control-plane node is Ready on `v1.36
 A newly scheduled verification pod on the server passed DNS, local ntfy readiness and cross-node Umami service checks under the new runtime, then was deleted. Public status, analytics heartbeat and ntfy readiness returned HTTP 200; protected dashboard returned 302. The real portfolio pageview `upgrade_check=k3s-server-1.36.5-20261027` was confirmed in PostgreSQL. All eight ntfy permission/publish/replay/stream checks passed using topic `upgrade-verification-1793137666146`; temporary credentials were removed. All active Kuma monitors report UP. Node metrics initially showed unknown server values during restart, then recovered on both nodes; metrics-server logs show a transient kubelet connection refusal during startup.
 
 Worker upgrade script staged and syntax-checked at `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/v1.36.5/upgrade-worker.sh`. It validates version/cgroups/configuration, stops for custom containerd templates or standard NRI plugin configuration, makes a fresh worker configuration/binary backup, verifies the candidate and atomically replaces K3s before restarting the agent. User execution and final two-node verification remain pending.
+
+### K3s stable target reached: both nodes on 1.36.5
+
+The user completed the worker upgrade, with configuration checks and binary checksums passing. Worker configuration/binary backup: `/home/pablo/k3s-backups/worker-pre-1.36.NaHkNG9r/`. The agent restarted at 21:50:20 UTC.
+
+- Both nodes are Ready on `v1.36.5+k3s1`, containerd `2.3.4-k3s1.36`. API readiness returns `ok`; all 22 ArgoCD Applications are Synced/Healthy and all non-completed pods were Running with reported containers ready.
+- A newly scheduled worker pod passed DNS and both local Umami and cross-node ntfy ClusterIP requests under containerd 2.3, then was removed.
+- A real browser pageview `upgrade_check=k3s-worker-1.36.5-20261027` was confirmed in PostgreSQL. Public status, collector heartbeat and ntfy readiness returned HTTP 200; the protected dashboard returned 302.
+- All eight ntfy permission, publish, replay and streaming checks passed using topic `upgrade-verification-1793137854948`. Temporary credentials were removed.
+- Worker metrics briefly showed unknown during startup, then both nodes reported CPU/memory successfully. All 12 PVCs remain Bound. Umami, Kuma and ntfy retain zero pod restarts.
+- All nine active Kuma monitors report UP.
+
+The planned K3s sequence (1.34 patch, then 1.35 and 1.36, server before worker each time) is complete and verified. Recovery archives remain outside Git. The separate Traefik 3.7.13 to 3.7.16 security update and configuration warnings still require their own reviewed GitOps change and verification.
