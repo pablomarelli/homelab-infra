@@ -281,3 +281,21 @@ The user completed the worker upgrade, with configuration checks and binary chec
 - All nine active Kuma monitors report UP.
 
 The planned K3s sequence (1.34 patch, then 1.35 and 1.36, server before worker each time) is complete and verified. Recovery archives remain outside Git. The separate Traefik 3.7.13 to 3.7.16 security update and configuration warnings still require their own reviewed GitOps change and verification.
+
+## Traefik 3.7.13 to 3.7.16
+
+### Review and preflight
+
+Read release notes for [3.7.14](https://github.com/traefik/traefik/releases/tag/v3.7.14), [3.7.15](https://github.com/traefik/traefik/releases/tag/v3.7.15), [3.7.16](https://github.com/traefik/traefik/releases/tag/v3.7.16), their 12 linked security advisories, and the migration guide from the exact target source tag.
+
+- 3.7.15 rejects all CONNECT requests with 501. This installation is a reverse proxy; ordinary HTTP and WebSocket upgrades must still be tested.
+- Ingress-NGINX naming/authentication changes and Gateway API precedence/backend-protocol changes do not affect the enabled providers: this installation uses Kubernetes CRD and Ingress only.
+- OTLP exponential histogram changes do not affect the configured Prometheus exporter.
+- 3.7.16 fixes ForwardAuth connection-bound NTLM/Negotiate identity leakage. The configured auth endpoint is Authentik's proxy outpost, not an identified NTLM/Kerberos backend. This review does not claim the specific exploit was demonstrated here; authentication redirects and denied anonymous access remain verification requirements.
+- FastProxy is not enabled. No new optional CRD fields are introduced by this change; the existing chart/CRDs stay at the K3s-packaged 40.1.5+up40.1.0.
+
+Pulled official `docker.io/library/traefik:v3.7.16`, verified the executable reports 3.7.16 (Go 1.26.10), and pinned manifest digest `sha256:1336e85aaed293bd63d005086e0dd013b04078b26aaeb1c18b26a2f928af7e65` in `manifests/traefik/helm-chart-config.yaml`. A HelmChartConfig named traefik in kube-system is reconciled by the existing traefik-config ArgoCD Application; it preserves the image selection across K3s restarts/upgrades.
+
+Rendered the exact installed chart with packaged values plus the override. The sole rendered difference is the container image. Both HelmChartConfig and rendered resources passed server dry-run. Deployment strategy is RollingUpdate with maxUnavailable 0/maxSurge 1. Captured pre-change HelmChart and Deployment/Service configuration outside Git under `/home/pablo/.tmp/opencode/traefik-upgrade-2026-10-27/`.
+
+Rollback: revert the Git change adding the HelmChartConfig, allow ArgoCD pruning and K3s Helm reconciliation to restore the packaged 3.7.13 image, then verify ingress. This restores the earlier vulnerabilities as well and is only a recovery measure. No application database migration is involved. Production rollout is pending.
