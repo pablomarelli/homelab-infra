@@ -260,3 +260,11 @@ Read containerd 2.3.0 through 2.3.4 release notes. Relevant changes include plug
 The exact 1.36.5 Traefik manifest matches the already-tested chart/image configuration (`40.1.5+up40.1.0`, 3.7.13). Candidate binary copied to `/home/pablo/k3s-upgrades/v1.36.5/`, with remote checksum/version checks passing: SHA256 `d73847bcd3c5fccef0115b372e2f9a91f3032dc84bbf71518a4617565294d313`, version `v1.36.5+k3s1 (3dd98cc5)`.
 
 The syntax-checked `upgrade-server.sh` in that directory validates the host, current version, recovery archive and binary, atomically replaces K3s and restarts its existing service. Await user execution and server verification before preparing the worker step. The matching pre-1.36 backup is the recovery baseline; do not assume a binary-only minor downgrade restores datastore/runtime state.
+
+### 1.36 server rollout verified
+
+The user completed the server upgrade. The control-plane node is Ready on `v1.36.5+k3s1` with containerd `2.3.4-k3s1.36`; the worker remains Ready on 1.35.9. API readiness returns `ok`, all 22 Applications are Synced/Healthy, Helm jobs are successful, and all non-completed pods were Running with reported containers ready.
+
+A newly scheduled verification pod on the server passed DNS, local ntfy readiness and cross-node Umami service checks under the new runtime, then was deleted. Public status, analytics heartbeat and ntfy readiness returned HTTP 200; protected dashboard returned 302. The real portfolio pageview `upgrade_check=k3s-server-1.36.5-20261027` was confirmed in PostgreSQL. All eight ntfy permission/publish/replay/stream checks passed using topic `upgrade-verification-1793137666146`; temporary credentials were removed. All active Kuma monitors report UP. Node metrics initially showed unknown server values during restart, then recovered on both nodes; metrics-server logs show a transient kubelet connection refusal during startup.
+
+Worker upgrade script staged and syntax-checked at `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/v1.36.5/upgrade-worker.sh`. It validates version/cgroups/configuration, stops for custom containerd templates or standard NRI plugin configuration, makes a fresh worker configuration/binary backup, verifies the candidate and atomically replaces K3s before restarting the agent. User execution and final two-node verification remain pending.
