@@ -110,4 +110,19 @@ Pre-upgrade archive: `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/ntfy
 
 Candidate image digest: `sha256:901e14503d3f605f445be0e68f2ac71f0aa73391897ce6ceb599f8c48d8b3792`.
 
-Production rollout: pending a final write-frozen backup and GitOps deployment.
+Production rollout completed through GitOps in commit `fdc2b92`. Automatic synchronization was temporarily disabled, ntfy was stopped, and both databases were snapshotted before the new image was published. Automatic synchronization was restored afterwards.
+
+Final backup: `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/ntfy-final-pre-2.34.0.tar.gz`; SHA256 `8aaa3c5ff1dc72641f6fdee8df6a40049a6c1fa02ff465aa66e7040b9990751c`.
+
+Production verification passed:
+
+- Startup logs confirm all seven schema steps completed; cache schema is 17 and auth schema is 9.
+- Both SQLite integrity checks return `ok`; user, token and ACL counts remain unchanged.
+- All eight permission, authentication, publish, cache replay and live-streaming checks passed through the public HTTPS endpoint and Cloudflare Tunnel using the existing publisher/subscriber tokens.
+- Two synthetic messages were published to dedicated topic `upgrade-verification-1793129454026`, without Firebase forwarding. Mobile push receipt was not independently verified.
+
+The temporary cluster backup helper, rehearsal containers/networks, unpacked database copies and local credential environment file were removed. Restricted backup archives are retained outside Git. Recovery requires stopping ntfy, retaining failed state, restoring both pre-upgrade databases together, reverting the image in Git, and verifying permissions/delivery before restoring automatic sync.
+
+## First security batch complete
+
+Umami 3.4.1, Uptime Kuma 2.5.8 and ntfy 2.34.0 were individually reviewed, rehearsed, deployed and verified. cloudflared 2026.10.5 was already deployed and its tunnel was verified. Remaining audit candidates have not been upgraded or fully migration-reviewed by this batch; the next platform work is K3s/Traefik, with a separate maintenance plan and datastore recovery check.
