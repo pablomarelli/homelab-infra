@@ -313,3 +313,17 @@ Deployed through GitOps in commit `ec87b48`; rollout began at 21:57:56 UTC. The 
 Verification limits: full authenticated ForwardAuth sessions and production-user login were not exercised; redirects were verified. External Kuma notification delivery and ntfy mobile push receipt were not independently verified. Recovery configuration was captured, but rollback was not rehearsed in production.
 
 Configuration-hardening follow-ups remain: unset `aliasHeadersStrategy`, implicit legacy `safeNaming`, unlimited ForwardAuth `maxResponseBodySize`, and encoded-path defaults. The image-only patch does not resolve these configuration warnings; changes require separate compatibility review and verification.
+
+## PostgreSQL 16.14 to 16.15
+
+### Review and recovery rehearsal
+
+Reviewed the complete [16.15 release notes](https://www.postgresql.org/docs/release/16.15/), including security fixes and post-update requirements. Same-major upgrades do not require dump/restore. Live inventory confirms 16.14, no replication slots or shared preload libraries, and no btree_gist/ltree extensions requiring the documented reindex consideration. All three databases have zero invalid indexes. Authentik has only plpgsql; Umami also has pgcrypto 1.3. No PGP encryption/decryption references were found in either application's schema dump; this does not rule out dynamically issued SQL. The pgcrypto change rejects previously broken encryption with unsupported ciphers. Standard backup scripts use custom-format dumps, not intentionally failing COPY test scripts.
+
+Fresh globals (including role credentials) and custom-format Authentik/Umami dumps are stored with restrictive permissions outside Git at `/home/pablo/.tmp/opencode/postgresql-upgrade-2026-10-27/`, with `SHA256SUMS`. These are on the desktop, separate from the database's battery-backed node. Treat this directory as sensitive recovery material.
+
+Pulled `postgres:16.15-alpine`, digest `sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab`; executable reports 16.15. Restored globals and both complete databases with fail-on-error into a network-isolated Docker instance using temporary memory-backed storage. `pg_amcheck --heapallindexed` passed on both restored databases. Authentik has 215 application tables, four users and four applications; Umami has 27 tables, one website and one user. These key object counts match production, and both restored databases have zero invalid indexes.
+
+Before rollout, all 22 Applications were Synced/Healthy; Authentik readiness and Umami collector heartbeat returned HTTP 200. Upgrade the Deployment and backup CronJob together. Existing Recreate strategy prevents concurrent servers opening the same data directory; expect a brief Authentik/Umami database interruption.
+
+Recovery: for an image startup regression, stop the new server before reverting the image to 16.14 against the same major-version data directory, then verify database and application health. If data recovery is needed, stop dependent writers and restore globals and both dumps into a fresh PostgreSQL 16 instance before reconnecting applications; writes since the dumps would be lost. The logical restore was rehearsed on 16.15, not a production rollback. Production rollout and post-upgrade backup-job verification are pending.

@@ -8,7 +8,8 @@ Three automated backup jobs run across the `monitoring` and `forgejo` namespaces
 
 **CronJob:** `manifests/pg-backup/cronjob.yaml`  
 **Schedule:** `0 3,15 * * *` — 03:00 and 15:00 daily  
-**Image:** `postgres:16-alpine`  
+**Image:** `postgres:16.15-alpine`
+
 **PVC:** `pg-backups`
 
 ### What gets backed up
