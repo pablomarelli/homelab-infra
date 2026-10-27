@@ -326,4 +326,17 @@ Pulled `postgres:16.15-alpine`, digest `sha256:0cefaabd882e42bcb2a2f3dc56d3ce477
 
 Before rollout, all 22 Applications were Synced/Healthy; Authentik readiness and Umami collector heartbeat returned HTTP 200. Upgrade the Deployment and backup CronJob together. Existing Recreate strategy prevents concurrent servers opening the same data directory; expect a brief Authentik/Umami database interruption.
 
-Recovery: for an image startup regression, stop the new server before reverting the image to 16.14 against the same major-version data directory, then verify database and application health. If data recovery is needed, stop dependent writers and restore globals and both dumps into a fresh PostgreSQL 16 instance before reconnecting applications; writes since the dumps would be lost. The logical restore was rehearsed on 16.15, not a production rollback. Production rollout and post-upgrade backup-job verification are pending.
+Recovery: for an image startup regression, stop the new server before reverting the image to 16.14 against the same major-version data directory, then verify database and application health. If data recovery is needed, stop dependent writers and restore globals and both dumps into a fresh PostgreSQL 16 instance before reconnecting applications; writes since the dumps would be lost. The logical restore was rehearsed on 16.15, not a production rollback.
+
+### Production rollout and verification
+
+GitOps commit `44b2cbc` upgraded both images. PostgreSQL 16.15 started at 22:06:49 UTC using the existing data directory without initialization or schema migration. The first SQL check caught a startup race: Kubernetes reported the container ready before PostgreSQL accepted connections because the Deployment had no readiness probe. Commit `15aa2db` adds a TCP-local `pg_isready` exec readiness check. After that rollout, the immediate SQL version check passed; the final pod started at 22:07:31 UTC and is ready with zero restarts.
+
+- Both application roles authenticated over TCP with their existing credentials. Authentik still has four users, and both databases have zero invalid indexes.
+- Authentik readiness, Umami heartbeat and the analytics UI returned HTTP 200. Protected status, Dozzle and share redirected to Authentik. Full user login/OAuth sessions were not exercised.
+- Browser query `upgrade_check=postgresql-16.15-20261027` produced exactly one PostgreSQL pageview, confirming application writes after the final restart.
+- Manual Job `pg-backup-1615-verification` ran the upgraded CronJob image successfully, writing both `20261027_220656` dumps to the backup PVC. The pre-upgrade dumps were fully restored and integrity-checked; the newly generated Job dumps were not separately restored.
+- All 22 Applications were Synced/Healthy and all non-completed pods were Running with their reported containers ready.
+- Kuma recorded the expected PostgreSQL interruption at 22:06:44 UTC and an UP check at 22:07:44 UTC; its parent group briefly retained the earlier DOWN state until the next group check. Final verification confirmed all nine active monitors UP with heartbeats after the final database restart.
+
+The isolated rehearsal also passed an AES-256 pgcrypto encrypt/decrypt round trip. The rehearsal container and its memory-backed data were removed; the off-node recovery files remain and their SHA256 checks pass.
