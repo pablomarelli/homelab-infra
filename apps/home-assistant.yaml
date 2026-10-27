@@ -1,21 +1,22 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: home-assistant
-  namespace: argocd
-  labels:
-    notifications.argocd/channel: main
-    notifications.argocd/profile: critical
-spec:
-  project: default
-  source: 
-    repoURL: https://github.com/PabloMarelli/home-assistant.git
-    targetRevision: main
-    path: k8s
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: home-assistant
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=false
-
+# Paused until a working application is available. Uncomment to re-enable,
+# remove its exclusion in app-of-apps.yaml, then sync app-of-apps.
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: home-assistant
+#   namespace: argocd
+#   labels:
+#     notifications.argocd/channel: main
+#     notifications.argocd/profile: critical
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/PabloMarelli/home-assistant.git
+#     targetRevision: main
+#     path: k8s
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: home-assistant
+#   syncPolicy:
+#     syncOptions:
+#       - CreateNamespace=false
