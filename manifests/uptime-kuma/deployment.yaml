@@ -5,6 +5,9 @@ metadata:
   namespace: monitoring
 spec:
   replicas: 1
+  # Only one process may migrate and write the SQLite database at a time.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: uptime-kuma
@@ -17,9 +20,23 @@ spec:
         homelab/power: battery-backed
       containers:
         - name: uptime-kuma
-          image: louislam/uptime-kuma:2.3.2
+          image: louislam/uptime-kuma:2.5.8
           ports:
             - containerPort: 3001
+          startupProbe:
+            httpGet:
+              path: /
+              port: 3001
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3001
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
           volumeMounts:
             - name: data
               mountPath: /app/data
