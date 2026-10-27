@@ -14,6 +14,8 @@ This preserves Argo CD's tested dependency set:
 
 If one of those embedded dependencies looks old, verify upstream first. Do not override it unless we intentionally create and maintain a separate overlay.
 
+Apply through `bootstrap/argocd/kustomization.yaml`. It excludes the empty upstream notification ConfigMap and Secret because the `argocd-notifications` Application and External Secrets own those resources. Applying the raw install manifest can empty the notification Secret during apply-ownership migration, even when server-side dry-run appears to preserve it. The upstream-generated file remains unmodified.
+
 ## Before Upgrading
 
 1. Read the target release notes and the matching upgrade guide.
@@ -45,7 +47,8 @@ rg 'image: (quay.io/argoproj/argocd|ghcr.io/dexidp/dex|public.ecr.aws/docker/lib
 Argo CD is the GitOps controller, so this bootstrap manifest is applied manually:
 
 ```bash
-kubectl apply -n argocd --server-side --force-conflicts -f bootstrap/argocd/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts --dry-run=server -k bootstrap/argocd
+kubectl apply -n argocd --server-side --force-conflicts -k bootstrap/argocd
 kubectl rollout status deployment/argocd-server -n argocd --timeout=180s
 kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=180s
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=180s
@@ -57,7 +60,12 @@ kubectl rollout status statefulset/argocd-application-controller -n argocd --tim
 2. Confirm repo-server can render Helm and Kustomize applications.
 3. Confirm app-of-apps reconciliation still works.
 4. Check for unexpected `OutOfSync`, `Degraded`, or `Missing` health changes.
+5. Verify the notification ConfigMap and Secret retain their data and the ExternalSecret is Ready. If recovering from a raw-manifest apply, force reconciliation and verify delivery:
+   ```bash
+   kubectl annotate externalsecret argocd-notifications-secret -n argocd \
+     force-sync="$(date +%s)" --overwrite
+   ```
 
 ## Rollback
 
-Rollback means replacing `bootstrap/argocd/install.yaml` with the previous official release manifest and applying it manually again. Do not roll back only selected embedded images.
+Rollback means replacing `bootstrap/argocd/install.yaml` with the previous official release manifest and applying `-k bootstrap/argocd` manually again, preserving the notification exclusions. Do not roll back only selected embedded images.

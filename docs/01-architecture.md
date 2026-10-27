@@ -15,7 +15,7 @@ The cluster follows three core design principles:
 ArgoCD is the cluster's control plane for deployments. The pattern used is **App-of-Apps**:
 
 ```
-bootstrap/argocd/install.yaml   ← applied once manually
+bootstrap/argocd/               ← Kustomize bootstrap applied manually
         │
         ▼
 ArgoCD (running in cluster)

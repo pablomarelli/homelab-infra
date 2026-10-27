@@ -50,7 +50,7 @@ kubectl apply -f bootstrap/namespaces.yaml
 ### 3. Install ArgoCD
 
 ```bash
-kubectl apply -n argocd -f bootstrap/argocd/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts -k bootstrap/argocd
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=120s
 ```
 
