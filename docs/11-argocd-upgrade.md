@@ -26,7 +26,7 @@ If one of those embedded dependencies looks old, verify upstream first. Do not o
 Replace the file from upstream. The version must be the exact Git tag, including the leading `v`:
 
 ```bash
-VERSION=v3.4.2
+VERSION=v3.5.6
 curl -fsSL \
   "https://raw.githubusercontent.com/argoproj/argo-cd/${VERSION}/manifests/install.yaml" \
   -o bootstrap/argocd/install.yaml

@@ -340,3 +340,22 @@ GitOps commit `44b2cbc` upgraded both images. PostgreSQL 16.15 started at 22:06:
 - Kuma recorded the expected PostgreSQL interruption at 22:06:44 UTC and an UP check at 22:07:44 UTC; its parent group briefly retained the earlier DOWN state until the next group check. Final verification confirmed all nine active monitors UP with heartbeats after the final database restart.
 
 The isolated rehearsal also passed an AES-256 pgcrypto encrypt/decrypt round trip. The rehearsal container and its memory-backed data were removed; the off-node recovery files remain and their SHA256 checks pass.
+
+## Argo CD 3.4.2 to 3.5.6
+
+### Review and preflight
+
+Reviewed releases 3.4.3 through 3.4.6 and 3.5.0 through 3.5.6, the exact-tag [3.4-to-3.5 migration guide](https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/operator-manual/upgrading/3.4-3.5.md), disaster-recovery instructions and all eight security advisories linked from 3.5.4. These cover Kustomize command execution, Jsonnet filesystem access, deletion-hook project restrictions, local-login rate limiting, SSH proxy command injection, extension RBAC and OCI manifest memory exhaustion. This review establishes affected version ranges, not exploitation in this cluster.
+
+Compatibility findings:
+
+- Candidate image includes Helm 4.2.1 and Kustomize 5.8.1. All five installed Helm charts (Alloy, Authentik, External Secrets, kube-prometheus-stack and Loki) rendered successfully using the candidate image, existing values and Kubernetes 1.36.5 capabilities. Live hard refresh remains required to verify Argo-specific multi-source rendering.
+- All active Git/chart sources use HTTPS. No repository Secrets or plain-HTTP OCI sources were found, so the Helm 4 explicit plain-HTTP setting is not required. No Kustomization files were found in this repository.
+- No custom UI extension init containers, impersonation configuration, project signature keys or repo-server mTLS Secret were found. React 19 extension rebuilding, Source Integrity migration and mTLS activation do not require changes for this deployment. Custom event-listing gRPC clients would need regeneration; none are identified in this infrastructure repository.
+- Security patches reject Jsonnet imports outside the repository, ignore Kustomize Helm configHome and limit OCI manifests to 4 MiB. Existing sources do not depend on these behaviors.
+
+Saved the exact old/new install manifests, namespace resource snapshot, workload/configuration snapshots and `argocd admin export` under `/home/pablo/.tmp/opencode/argocd-upgrade-2026-10-27/` with restrictive permissions. Export parses successfully and contains 22 Applications, one AppProject and the main Argo CD Secret; the additional namespace snapshot includes other Secrets/configuration. SHA256 checks pass. These files contain credentials and must stay outside Git. Export validation is not a disaster-recovery import rehearsal.
+
+The existing manifest is byte-identical to upstream 3.4.2. The complete upstream 3.5.6 manifest passed server-side dry-run; projected data for every overlapping ConfigMap/Secret is unchanged, as are inspected Role/ClusterRole rules. Non-fatal last-applied annotation ownership migration warnings occurred for GitOps/External Secrets-managed resources; their actual configuration/secret data was preserved in dry-run.
+
+The new dependency set is Argo CD 3.5.6, Dex 2.45.1 and Redis 8.2.3-alpine (unchanged upstream). Use the complete generated manifest without hand-editing embedded images. Rollback uses the saved complete 3.4.2 manifest with the runbook's server-side apply, then verifies controllers and reconciliation; reverting restores the old security exposure. Bootstrap is manually applied, independent of Argo CD itself or a particular management PC. All 22 Applications were Synced/Healthy before the change. Production rollout is pending.
