@@ -79,4 +79,35 @@ Backup: `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/kuma-pre-2.5.8.ta
 
 Candidate image digest: `sha256:20abea8c48a163cf0a7a5d5936ab418e4b742d908704e1f58f6c06e56a9c6b67`.
 
-Production rollout and post-upgrade monitor checks: pending.
+Production rollout completed through GitOps in commit `9632344`, after taking a fresh online-safe archive at `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/kuma-final-pre-2.5.8.tar.gz`. Startup/readiness probes passed; SQLite integrity is `ok`; all 11 monitors, one notification configuration and two status pages remain. All nine active monitors produced new UP heartbeats after startup, and the public status page rendered "All Systems Operational" in the browser. Finance and Home Assistant monitors remain paused. Notification configuration was preserved, but an external notification delivery was not deliberately triggered.
+
+For rollback, stop the application, retain the failed state, restore the complete pre-upgrade archive to the data PVC and revert to the old image before starting one replica. Heartbeats since the snapshot would be lost. The migration rehearsal and its test login never changed production credentials or monitor activity settings.
+
+## ntfy: 2.14.0 to 2.34.0
+
+Reviewed all published non-prerelease notes between the installed and target versions via the [upstream releases](https://github.com/binwiederhier/ntfy/releases), including the explicit upgrade notes for 2.20.0, 2.28.0, 2.31.0 and 2.31.1, and the target documentation for declarative users/tokens.
+
+### Risks checked
+
+- The existing installation uses SQLite cache/auth stores, declarative publisher/subscriber credentials, deny-all anonymous access and wildcard ACLs. PostgreSQL and experimental clustering changes are not enabled here.
+- SQLite ACL matching becomes case-sensitive in 2.24.0; current wildcard rules retain their meaning.
+- 2.20.0 takes ownership of attachment-directory cleanup. No attachment store is configured or present in the current data directory.
+- 2.28.0 limits titles to 1 KB, combined tags to 512 bytes and cache replay to 10 MB per topic; heavy polling also consumes the attachment-bandwidth budget. Oversized custom publishers may now get HTTP 400/429, and custom replay consumers must honor truncation headers.
+- 2.31.0 changes reconnect replay boundaries and custom clients may see duplicate message IDs. Standard ntfy clients deduplicate them.
+- Cache schema migrates from 13 to 17; auth schema from 6 to 9. A rollback to 2.14.0 must restore both old databases rather than assume the later backward-compatibility behavior applies to the old binary.
+- 2.34.0 fixes subscription authorization revocation; earlier releases also fix weak token randomness, template denial of service, web-push SSRF and web-app issues.
+- Use Recreate for the SQLite migration and the newly available `/v1/ready` endpoint for readiness.
+
+### Rehearsal
+
+Created consistent online SQLite snapshots through a temporary read-only PVC helper and restored them into an isolated container with production resource limits and the same provisioning environment. Upstream mobile push was disabled in the rehearsal and its container network had no external route.
+
+All migrations succeeded and both SQLite integrity checks passed. Three user rows (including the built-in row), two tokens and two ACL entries were preserved. All 54 cached messages were preserved before adding two test messages.
+
+Functional checks passed using the existing provisioned tokens: anonymous read/write denied, publisher read denied, subscriber write denied, invalid token denied, authorized publish accepted, authenticated cache replay succeeds, and a live streaming subscriber receives a new publish. Test code reports only outcomes, not credentials.
+
+Pre-upgrade archive: `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/ntfy-pre-2.34.0.tar.gz`.
+
+Candidate image digest: `sha256:901e14503d3f605f445be0e68f2ac71f0aa73391897ce6ceb599f8c48d8b3792`.
+
+Production rollout: pending a final write-frozen backup and GitOps deployment.
