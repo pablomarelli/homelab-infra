@@ -298,4 +298,18 @@ Pulled official `docker.io/library/traefik:v3.7.16`, verified the executable rep
 
 Rendered the exact installed chart with packaged values plus the override. The sole rendered difference is the container image. Both HelmChartConfig and rendered resources passed server dry-run. Deployment strategy is RollingUpdate with maxUnavailable 0/maxSurge 1. Captured pre-change HelmChart and Deployment/Service configuration outside Git under `/home/pablo/.tmp/opencode/traefik-upgrade-2026-10-27/`.
 
-Rollback: revert the Git change adding the HelmChartConfig, allow ArgoCD pruning and K3s Helm reconciliation to restore the packaged 3.7.13 image, then verify ingress. This restores the earlier vulnerabilities as well and is only a recovery measure. No application database migration is involved. Production rollout is pending.
+Rollback: revert the Git change adding the HelmChartConfig, allow ArgoCD pruning and K3s Helm reconciliation to restore the packaged 3.7.13 image, then verify ingress. This restores the earlier vulnerabilities as well and is only a recovery measure. No application database migration is involved.
+
+### Production rollout verified
+
+Deployed through GitOps in commit `ec87b48`; rollout began at 21:57:56 UTC. The live executable reports Traefik 3.7.16 and Go 1.26.10. Pod `traefik-8b75989cb-v57ld` is ready with zero restarts and the expected pinned image digest.
+
+- All 22 ArgoCD Applications are Synced/Healthy. All nine active Kuma monitors have UP heartbeats after the rollout.
+- Portfolio, public status, analytics collector heartbeat, ntfy readiness and share health returned HTTP 200. Protected status, Dozzle and share routes returned 302 to `auth.pablomarelli.dev`. ArgoCD, Grafana, Authentik, analytics and Forgejo returned HTTP 200 after redirects.
+- The public Kuma WebSocket returned an Engine.IO handshake. A direct LAN CONNECT request to Traefik returned the expected 501.
+- Real browser query `upgrade_check=traefik-3.7.16-20261027` produced exactly one confirmed PostgreSQL pageview.
+- All eight ntfy permission, publish, replay and live-streaming checks passed with topic `upgrade-verification-1793138325518`. Temporary test credentials were removed.
+
+Verification limits: full authenticated ForwardAuth sessions and production-user login were not exercised; redirects were verified. External Kuma notification delivery and ntfy mobile push receipt were not independently verified. Recovery configuration was captured, but rollback was not rehearsed in production.
+
+Configuration-hardening follow-ups remain: unset `aliasHeadersStrategy`, implicit legacy `safeNaming`, unlimited ForwardAuth `maxResponseBodySize`, and encoded-path defaults. The image-only patch does not resolve these configuration warnings; changes require separate compatibility review and verification.
