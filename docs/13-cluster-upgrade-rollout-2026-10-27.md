@@ -41,7 +41,19 @@ Risks and decisions:
 
 ### Production rollout
 
-Pending: freeze application writes, take a final backup, deploy the reviewed manifest through GitOps, verify migrations, preserved data, public collection and application health.
+Completed through GitOps in commit `23bc28f`:
+
+- Temporarily disabled Umami automatic synchronization, scaled the old Deployment to zero and waited for its pod to terminate before the final backup.
+- Final backup: `/home/pablo/.tmp/opencode/cluster-upgrades-2026-10-27/umami-final-pre-3.4.1.dump`; SHA256 `5e9b63618e2ffd04a47bf5e3a04ca130dfa4a96e24509abfb3f748a19525381b`.
+- Pushed the reviewed manifest and restored the original automatic synchronization policy. The Deployment rolled out successfully with 3.4.1.
+- Startup logs confirm all seven migrations applied successfully; the database records 26 completed migrations.
+- Before the post-upgrade browser check, existing counts remained one website, 75 events and 21 sessions.
+- Public collector heartbeat returned `{"ok":true}`.
+- Visited the real portfolio in a browser with query `upgrade_check=umami-3.4.1-20261027`: tracker script returned HTTP 200, collection POST returned HTTP 200, and the corresponding pageview was found in the production database. This adds one intentional verification pageview to analytics.
+- All 22 remaining Argo CD Applications report Synced and Healthy, including app-of-apps and Umami. The inactive project exclusions were published in preceding commit `059cf77`.
+- Authenticated dashboard login/reporting was verified on the restored production-data rehearsal; a real production-user login was not performed because no user credentials were supplied.
+
+Rehearsal containers and their internal network were removed after verification; the pre-upgrade backups were retained outside Git. Later components still require their own intervening-changelog and deployment-risk review before rollout.
 
 ### Recovery procedure
 
