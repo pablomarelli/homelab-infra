@@ -126,3 +126,49 @@ The temporary cluster backup helper, rehearsal containers/networks, unpacked dat
 ## First security batch complete
 
 Umami 3.4.1, Uptime Kuma 2.5.8 and ntfy 2.34.0 were individually reviewed, rehearsed, deployed and verified. cloudflared 2026.10.5 was already deployed and its tunnel was verified. Remaining audit candidates have not been upgraded or fully migration-reviewed by this batch; the next platform work is K3s/Traefik, with a separate maintenance plan and datastore recovery check.
+
+## K3s / Traefik: first-step preflight
+
+Both nodes still report `v1.34.3+k3s1` and Ready. Rechecked the official channel service: the current stable destination is `v1.36.5+k3s1`, with intermediate candidates `v1.34.12+k3s1` and `v1.35.9+k3s1`. Upgrade the server first and then the agent at each step; do not skip Kubernetes minors.
+
+The session runs on `homelab-desktop-01` as `pablo`. SSH to `pablo@192.168.100.3` now works with the desktop's dedicated `homelab-management` key. Privileged operations still require the user's interactive sudo session. The user confirmed SQLite and completed a stopped-server backup, then restarted K3s successfully. No version upgrade has run.
+
+Recovery archive: `/home/pablo/k3s-backups/pre-upgrade.nqKbY684/state.tar.gz` on the server, copied to `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/pre-upgrade.nqKbY684/` on the desktop. Both copies have SHA256 `9d39f5181983968eeb77486b8728333bfed05e491ff67e3a402e3ec53ae49340`. The archive includes the server directory/token, node configuration, service unit/environment and installed binary. An extracted database copy passed `PRAGMA integrity_check` with 2,210 kine rows. This verifies archive transfer and database integrity, not a full disaster-recovery rehearsal. Both nodes were Ready and all 22 ArgoCD Applications Synced/Healthy after the backup restart.
+
+### Initial compatibility findings
+
+- Read K3s 1.34.4 through 1.34.12 release notes, the additional 1.34.3+k3s3 release (the k3s2 release endpoint returns 404), upstream Kubernetes 1.34.4 through 1.34.12 changes, and official manual-upgrade/backup guidance. The Kubernetes patch notes describe fixes rather than an API-removal migration. Later minor-version reviews and privileged host configuration checks remain pending.
+- All three selected K3s releases bundle Traefik 3.7.13, not the previously identified security target 3.7.16. The packaged upgrade alone does not finish the ingress security update.
+- The current packaged Traefik chart is `37.1.1+up37.1.0`, with image 3.5.1 and no HelmChartConfig override. The selected K3s releases move to chart 40.x, whose ingress-nginx provider key changes from `kubernetesIngressNginx` to `kubernetesIngressNGINX`.
+- The running Traefik enables Kubernetes CRD and Ingress providers, not Ingress-NGINX or Gateway API, so that provider-key rename does not affect the observed configuration.
+- Read Traefik's minor-version migration guidance. Relevant verification includes Authentik ForwardAuth and forwarded HTTPS headers, request path handling, CRD/chart compatibility, and long-lived streams. The configured middleware already sets `trustForwardHeader: true`; that field is deprecated but still supported in the candidate branch.
+- Prefer updating the binary with checksum verification and retaining the installed service configuration. Re-running the K3s installer without the original environment/arguments can lose configuration.
+- Downloaded the exact amd64 candidate and matched its published SHA256; its version output is `v1.34.12+k3s1 (47b47499)`, Go `go1.26.8`. Artifacts are staged outside Git under `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/` and are not installed.
+- Target source manifest specifies separate Traefik/CRD charts `40.1.5+up40.1.0`, `failurePolicy: retry`, and `forceConflicts: true`. Both chart archives were downloaded for inspection. Reviewed chart major releases 38, 39 and 40: CRDs must be upgraded first; HTTP port options move under `http`; Service options move under `service.spec`; schema validation tightens. The target K3s manifest already moves `ipFamilyPolicy` to `service.spec`. There are no live HelmChartConfig overrides to translate. Chart rendering and CRD compatibility checks remain pending.
+
+### Recovery and rollout prerequisites
+
+The SQLite backup prerequisite is satisfied as recorded above. The user ran privileged `k3s check-config`: STATUS pass, cgroup v2 controllers good, required kernel features enabled, and no custom containerd v2/v3 templates. The kernel config was successfully read from `/boot` after the optional `configs` module lookup failed. Existing cluster CIDR routes are expected on this running node. Swap is active (4 GiB configured, about 1.6 GiB used); the live kubelet config explicitly has `failSwapOn: false`, `memorySwap: {}`, and systemd cgroups. Keep the existing host configuration for this patch step rather than changing memory management during the upgrade.
+
+Rendered both exact packaged charts using Helm 3.19.4 with the target K3s values and Kubernetes 1.34.12 capabilities. Server-side dry-run accepted all 35 candidate CRDs; server dry-run accepted the rendered ServiceAccount, RBAC, Service, Deployment and IngressClass. These are admission/render checks, not a live ingress test; Helm/CRD reconciliation and route functionality must still be verified after restart.
+
+The verified binary and checksum are staged on the server under `/home/pablo/k3s-upgrades/v1.34.12/`. SHA256: `ef1df26b26276c0f6d962391c94e12f9362d1f1e30ec7a7926e9ddb84b0d66ce`. Remote checksum and version checks passed. Next is the user's privileged atomic binary replacement and service restart, preserving the existing service configuration. No upgrade has been executed yet. Single-control-plane API interruption is expected; local PVC workloads cannot be assumed to reschedule to the other node.
+
+After each server/agent step, verify node versions and readiness, pod health, DNS and service networking, persistent workloads, Helm reconciliation, public routes, protected-route redirects, analytics ingestion, ntfy streaming, status-page monitors and Argo CD reconciliation. Choose the Traefik security patch override only after inspecting the target chart and CRDs, then publish it declaratively through a HelmChartConfig.
+
+Sources: [K3s channels](https://update.k3s.io/v1-release/channels), [manual upgrade](https://docs.k3s.io/upgrades/manual), [backup/restore](https://docs.k3s.io/datastore/backup-restore), [K3s releases](https://github.com/k3s-io/k3s/releases), [Traefik minor migrations](https://doc.traefik.io/traefik/migrate/v3/).
+
+### Control-plane 1.34.12 rollout
+
+The user completed the checksum-verified atomic binary replacement and restarted `k3s`. Live checks confirm the server is Ready on `v1.34.12+k3s1`, containerd `2.2.7-k3s1`; the worker remains Ready on `v1.34.3+k3s1` pending its own step.
+
+- API `/readyz` returns `ok`. Both Traefik Helm install jobs completed. Traefik, CoreDNS, metrics-server and local-path-provisioner rollouts succeeded; node metrics are available.
+- Initial readiness transitions during restart cleared; every non-completed pod's reported containers were ready at the follow-up check.
+- Public portfolio, collector heartbeat, Kuma public status and ntfy readiness returned HTTP 200. ArgoCD, Grafana and Authentik returned redirects. Protected Kuma dashboard redirects to Authentik with an HTTPS callback; authenticated browser login remains untested.
+- A real portfolio browser visit with query `upgrade_check=k3s-server-1.34.12-20261027` produced a confirmed database pageview. DNS from the worker's Umami pod resolves the control-plane PostgreSQL service.
+- All eight ntfy permission/publish/cache/stream checks passed through public HTTPS; two test messages were written to topic `upgrade-verification-1793135206574`. The temporary credential file was removed.
+- All nine active Kuma monitors reported UP with fresh post-Traefik-rollout heartbeats.
+- Traefik logs revealed two stale routes pointing at removed Finance Manager/Home Assistant services. Commented those routes out in Git to complete their requested disablement; route manifest server dry-run passed.
+- Traefik 3.7.13 logs also warn about unset alias-header policy, legacy resource naming and unlimited ForwardAuth response bodies. These require review in the separate ingress security update; the packaged upgrade is not the completed Traefik security patch.
+
+Worker preflight from the API confirms systemd cgroups and `failSwapOn: false`; its agent service is active with no drop-ins. A syntax-checked privileged script is staged outside Git at `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/upgrade-worker-1.34.12.sh`. It checks the hostname/version, runs host checks, stops if custom containerd templates exist, backs up the installed binary and configuration, verifies the new binary checksum, atomically replaces it and restarts only `k3s-agent`. It has not been executed yet.
