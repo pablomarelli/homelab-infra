@@ -189,3 +189,28 @@ Post-upgrade checks:
 - GitOps pruned both disabled-app IngressRoutes; all 22 Applications remained healthy after that cleanup.
 
 The 1.34 patch step is complete. The later 1.35 and 1.36 minor upgrades and separate Traefik security patch remain pending their respective reviews, backups and verification.
+
+### 1.35 preflight started
+
+Reviewed Kubernetes 1.35 urgent upgrade notes, API changes and patch notes through 1.35.9, plus K3s 1.35.0 through 1.35.9 k3s1 release notes. Additional k3s revision notes and final configuration compatibility checks remain pending.
+
+- Kubernetes 1.35 defaults to refusing cgroup v1; both hosts already use cgroup v2.
+- The kubelet `pod-infra-container-image` flag was removed. A privileged pre-backup check will stop if that string or custom feature gates appear in the server's K3s configuration/service files. Worker configuration needs the corresponding check before its upgrade.
+- StorageVersionMigration v1alpha1 is removed; the live API discovery has no storagemigration resources. There are no live ResourceSlices affected by the partitionable-device alpha API change.
+- Image credential verification becomes beta/default-on. No current pods declare imagePullSecrets; private registry/node credentials still need consideration when testing new pod creation.
+- The target patch includes fixes disabling the initial 1.35 SchedulerAsyncAPICalls and MaxUnavailableStatefulSet regressions by default.
+- The target component table lists the same containerd 2.2.7, Traefik 3.7.13, CoreDNS 1.14.7 and local-path 0.0.37 as the completed patch step; helm-controller changes to 0.17.9.
+- Downloaded and checksum-verified amd64 `v1.35.9+k3s1 (58877f27)` outside Git. It is not installed.
+- The system kubectl is 1.37.1 and reports unsupported client skew against 1.34; use a version-matched bundled client for subsequent upgrade checks.
+
+A syntax-checked backup-only script is staged on the server at `/home/pablo/k3s-upgrades/pre-1.35-backup.sh`. It checks the current version and flagged configuration, stops K3s to archive the current server state/token/configuration/binary, then restarts it. Await the user's execution, off-node archive copy and SQLite integrity check before installing 1.35.
+
+### 1.35 server backup verified and upgrade staged
+
+The user executed the pre-backup script successfully: no removed kubelet flag or custom feature-gate string was found in the checked server configuration/service files. The stopped-server backup is `/home/pablo/k3s-backups/pre-1.35.KSGccRhD/state.tar.gz`, copied to the desktop's upgrade workspace. SHA256 matches on both machines: `c471a33fb65074428a83c91eff6afb1f211693df5fa79cacc4f84e416ecc856f`. An extracted database copy passed SQLite integrity checking and contains 3,842 kine rows. Both nodes and all 22 Applications are healthy after the backup restart.
+
+Completed the additional K3s `v1.35.0+k3s3` release review, whose notes cover changes since k3s1. Compared exact target/current Traefik manifests: they are identical, including chart `40.1.5+up40.1.0` and image 3.7.13. The earlier chart migration is already exercised by the completed 1.34 patch step. Server-first upgrade leaves the 1.34 worker within the supported older-kubelet skew; upgrade and verify that worker before considering 1.36.
+
+Bundled 1.34 kubectl with the management kubeconfig now works for checks, avoiding the system 1.37 client's unsupported skew. The 1.35.9 binary was copied to `/home/pablo/k3s-upgrades/v1.35.9/` and its remote checksum/version verified: SHA256 `897acb21cca57d477a211102251a6591450ce767344a9faaa121a1007ca9fa9a`, version `v1.35.9+k3s1 (58877f27)`.
+
+The syntax-checked `upgrade-server.sh` in that directory verifies host/current version, cgroup v2, the exact recovery archive hash and candidate binary hash, then atomically replaces the binary and restarts K3s without rewriting its service configuration. Await user execution and full rollout verification. Recovery from a failed minor upgrade must account for datastore changes: retain failed state and use the matching pre-1.35 state/configuration/binary backup rather than assume a binary-only downgrade is supported.
