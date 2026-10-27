@@ -87,14 +87,14 @@ Critical alerts suppress their corresponding warning alerts to reduce noise.
 
 ### Discord integration
 
-Two channels are configured:
+Two webhook aliases are configured; aliases are not Discord channel names:
 
-| Channel | Label | Used for |
-|---|---|---|
-| `discord-main` | `notifications.argocd/channel: main` | Application deployments |
-| `discord-infra` | `notifications.argocd/channel: infra` | Infrastructure changes |
+| Webhook alias | Discord channel | Label | Used for |
+|---|---|---|---|
+| `discord-main` | `#notificaciones-infra` (user-reported replacement destination) | `notifications.argocd/channel: main` | Application deployments |
+| `discord-infra` | Not yet documented | `notifications.argocd/channel: infra` | Infrastructure changes |
 
-The Discord webhook URLs are stored in 1Password and pulled via `ExternalSecret`.
+The Discord webhook URLs are stored in the `homelab-secrets` 1Password vault, in the `argocd-notifications` item. Keep the exact field names `discord-main-webhook-url` and `discord-infra-webhook-url`; change their values when replacing webhooks, not their names. External Secrets copies them into the `argocd/argocd-notifications-secret` Kubernetes Secret hourly. Webhook display names and destination channels are configured in Discord; record their non-secret names here, never their URLs.
 
 ### Custom disk alerts
 
