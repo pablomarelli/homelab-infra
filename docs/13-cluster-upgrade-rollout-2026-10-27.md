@@ -358,4 +358,27 @@ Saved the exact old/new install manifests, namespace resource snapshot, workload
 
 The existing manifest is byte-identical to upstream 3.4.2. The complete upstream 3.5.6 manifest passed server-side dry-run; projected data for every overlapping ConfigMap/Secret is unchanged, as are inspected Role/ClusterRole rules. Non-fatal last-applied annotation ownership migration warnings occurred for GitOps/External Secrets-managed resources; their actual configuration/secret data was preserved in dry-run.
 
-The new dependency set is Argo CD 3.5.6, Dex 2.45.1 and Redis 8.2.3-alpine (unchanged upstream). Use the complete generated manifest without hand-editing embedded images. Rollback uses the saved complete 3.4.2 manifest with the runbook's server-side apply, then verifies controllers and reconciliation; reverting restores the old security exposure. Bootstrap is manually applied, independent of Argo CD itself or a particular management PC. All 22 Applications were Synced/Healthy before the change. Production rollout is pending.
+The new dependency set is Argo CD 3.5.6, Dex 2.45.1 and Redis 8.2.3-alpine (unchanged upstream). Use the complete generated manifest without hand-editing embedded images. Rollback replaces install.yaml with the saved complete 3.4.2 manifest and applies the notification-preserving Kustomize overlay described below, then verifies controllers and reconciliation; reverting restores the old security exposure. Bootstrap is manually applied, independent of Argo CD itself or a particular management PC. All 22 Applications were Synced/Healthy before the change.
+
+### Production rollout and verification
+
+Commit `85f0333` replaced the complete upstream manifest and it was applied manually. All six Deployments and the application-controller StatefulSet completed rollout. Live Argo CD reports 3.5.6 and repo-server Helm reports 4.2.1. All seven pods are ready with zero restarts.
+
+- Hard-refreshed all 22 Applications and waited for the refresh annotations to clear. All were Synced/Healthy with no error conditions, including app-of-apps and multi-source Helm applications.
+- Through a loopback Kubernetes port-forward, the API reports 3.5.6, rejects anonymous application listing with 401, and accepts the existing admin credential. Authenticated API and matching-version CLI each list all 22 healthy applications. The test session was logged out.
+- Authenticated manifest retrieval passed for app-of-apps (22 resources), Alloy (7), Authentik (9), External Secrets (42), kube-prometheus-stack (115), and Loki (16). The application-events REST endpoint also passed.
+- The browser rendered the new login form through the local port-forward. A full browser login was not exercised; authenticated API/CLI access was tested. The public hostname redirects unauthenticated visitors to Cloudflare Access, so an HTTP 200 after following redirects alone does not verify the Argo CD UI. The Cloudflare-authenticated browser path remains untested.
+- All nine active Kuma monitors have UP heartbeats after the rollout.
+
+### Notification ownership issue found and corrected
+
+Despite the dry-run preserving configuration, applying the raw upstream manifest emptied `argocd-notifications-secret`, which External Secrets owns. Notification-controller logs showed unresolved webhook references during this interval. Forced ExternalSecret reconciliation restored both values at 22:21:51 UTC. A value-by-value comparison confirmed all pre-existing ConfigMap/Secret data now matches the backup.
+
+Commit `71914c6` adds `bootstrap/argocd/kustomization.yaml` to exclude upstream's empty notification ConfigMap/Secret placeholders, preserving their GitOps/External Secrets ownership without editing the generated file. Both installation and upgrade runbooks now apply `-k bootstrap/argocd`, including rollback. The overlay renders 57 resources, excludes both placeholders, passes server-side dry-run, and was reapplied successfully. Post-apply comparison confirmed every pre-existing ConfigMap/Secret value remains intact.
+
+Actual webhook delivery checks found:
+
+- `discord-infra`: HTTP 204, accepted by Discord.
+- `discord-main`: HTTP 404 with Discord code 10015, `Unknown Webhook`. Its value is identical to the pre-upgrade backup, so replacing the stale webhook is separate follow-up work. Update the `discord-main-webhook-url` field in the 1Password `argocd-notifications` item, force ExternalSecret refresh and repeat delivery verification. Do not put the webhook URL in Git or chat.
+
+The notification CLI exited zero even on the failed delivery; inspect the HTTP response/log outcome rather than relying on exit status. Logs contain sensitive webhook paths and are kept outside Git with restrictive permissions. Argo CD reconciliation and the upgrade are verified; main-channel notification delivery remains blocked on a valid replacement webhook.

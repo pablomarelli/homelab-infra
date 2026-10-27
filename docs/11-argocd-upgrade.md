@@ -65,6 +65,7 @@ kubectl rollout status statefulset/argocd-application-controller -n argocd --tim
    kubectl annotate externalsecret argocd-notifications-secret -n argocd \
      force-sync="$(date +%s)" --overwrite
    ```
+   Inspect notification HTTP outcomes: the notification CLI can exit zero after a delivery error. Keep verbose logs private because they include webhook credentials.
 
 ## Rollback
 
