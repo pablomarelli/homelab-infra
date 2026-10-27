@@ -5,6 +5,9 @@ metadata:
   namespace: monitoring
 spec:
   replicas: 1
+  # Startup runs schema migrations; do not overlap old and new application versions.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: umami
@@ -23,7 +26,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: umami
-          image: ghcr.io/umami-software/umami:3.1.0
+          image: ghcr.io/umami-software/umami:3.4.1
           ports:
             - containerPort: 3000
           startupProbe:
