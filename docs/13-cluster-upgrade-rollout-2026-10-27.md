@@ -172,3 +172,20 @@ The user completed the checksum-verified atomic binary replacement and restarted
 - Traefik 3.7.13 logs also warn about unset alias-header policy, legacy resource naming and unlimited ForwardAuth response bodies. These require review in the separate ingress security update; the packaged upgrade is not the completed Traefik security patch.
 
 Worker preflight from the API confirms systemd cgroups and `failSwapOn: false`; its agent service is active with no drop-ins. A syntax-checked privileged script is staged outside Git at `/home/pablo/.tmp/opencode/k3s-upgrade-2026-10-27/upgrade-worker-1.34.12.sh`. It checks the hostname/version, runs host checks, stops if custom containerd templates exist, backs up the installed binary and configuration, verifies the new binary checksum, atomically replaces it and restarts only `k3s-agent`. It has not been executed yet.
+
+### Worker 1.34.12 rollout and completed patch step
+
+The user subsequently executed the worker script successfully. Host checks passed, both binary checksums matched, and `k3s-agent` restarted at 21:08:59 UTC. The script created `/home/pablo/k3s-backups/worker-pre-1.34.12.bfLlDumL/config-and-binary.tar.gz` with the old binary and configuration. Its archive listing was validated by the script; an independent restore rehearsal was not performed.
+
+Post-upgrade checks:
+
+- Both nodes are Ready on `v1.34.12+k3s1` and containerd `2.2.7-k3s1`; API readiness returns `ok`, and node metrics are available.
+- All 22 ArgoCD Applications are Synced/Healthy. No non-completed pod was non-Running or had a reported unready container. Umami, Kuma and ntfy retain zero restarts.
+- A newly created Alpine verification pod on the worker completed successfully, resolving Kubernetes service DNS and fetching Umami's service heartbeat. The pod was deleted afterwards. This exercises new container creation and networking after the runtime upgrade, not just surviving old containers.
+- Portfolio, collector heartbeat, public status and ntfy readiness all return HTTP 200.
+- The portfolio browser visit `upgrade_check=k3s-worker-1.34.12-20261027` was confirmed as one pageview in PostgreSQL.
+- All eight ntfy authorization, publish, replay and streaming checks passed again, using topic `upgrade-verification-1793135396267`; the temporary credential file was removed.
+- All nine active Kuma monitors have UP heartbeats later than the worker restart.
+- GitOps pruned both disabled-app IngressRoutes; all 22 Applications remained healthy after that cleanup.
+
+The 1.34 patch step is complete. The later 1.35 and 1.36 minor upgrades and separate Traefik security patch remain pending their respective reviews, backups and verification.
