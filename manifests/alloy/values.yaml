@@ -1,4 +1,5 @@
 alloy:
+  storagePath: /var/lib/alloy
   configMap:
     create: true
     content: |
@@ -103,8 +104,17 @@ alloy:
       }
   mounts:
     varlog: true
+    extra:
+      - name: alloy-state
+        mountPath: /var/lib/alloy
 controller:
   type: daemonset
+  volumes:
+    extra:
+      - name: alloy-state
+        hostPath:
+          path: /var/lib/alloy
+          type: DirectoryOrCreate
   tolerations:
     - key: homelab/power
       operator: Equal
