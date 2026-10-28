@@ -4,6 +4,7 @@ metadata:
   name: forgejo-backup
   namespace: forgejo
 spec:
+  suspend: true
   schedule: "15 3 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
