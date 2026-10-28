@@ -1,6 +1,8 @@
 # Grafana configuration
 grafana:
   enabled: true
+  image:
+    tag: "13.2.5-distroless"
   persistence:
     enabled: true
     size: 5Gi
@@ -52,7 +54,7 @@ grafana:
 # Prometheus configuration
 prometheus:
   prometheusSpec:
-    replicas: 0
+    replicas: 1
     retention: 15d
     storageSpec:
       volumeClaimTemplate:
@@ -71,7 +73,7 @@ prometheus:
 # Alertmanager configuration (Discord will be added in Phase 8)
 alertmanager:
   alertmanagerSpec:
-    replicas: 0
+    replicas: 1
     alertmanagerConfiguration:
       name: alertmanager-main
     storage:
