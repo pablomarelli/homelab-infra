@@ -13,6 +13,7 @@ spec:
       labels:
         app: dozzle
     spec:
+      enableServiceLinks: false
       serviceAccountName: dozzle
       nodeSelector:
         homelab/node-role: worker
