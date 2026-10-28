@@ -67,6 +67,27 @@ ArgoCD syncs the `ExternalSecret`. ESO fetches the value from 1Password and crea
 
 Sealed Secrets uses asymmetric encryption. You encrypt with the controller's public key; only the in-cluster controller can decrypt. The encrypted blob is safe to commit.
 
+### Controller maintenance and recovery
+
+`bootstrap/sealed-secrets/kustomization.yaml` pins the upstream 0.41.2 release manifest and controller image digest. This controller is bootstrap-managed, not owned by an ArgoCD Application. Apply it from any management machine with repository access and an authorized kubeconfig:
+
+```bash
+kubectl apply -k bootstrap/sealed-secrets
+kubectl rollout status deployment/sealed-secrets-controller -n kube-system --timeout=180s
+```
+
+Before upgrading, back up **all** sealing-key Secrets selected by `sealedsecrets.bitnami.com/sealed-secrets-key`, the live SealedSecrets, Deployment and CRD into private storage outside Git. Verify backup checksums and offline recovery with the candidate `kubeseal` binary:
+
+```bash
+umask 077
+kubectl get secrets -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o json > sealing-keys.json
+kubeseal --recovery-unseal --recovery-private-key sealing-keys.json < existing.sealed.yaml > recovered-secret.json
+```
+
+Run these commands in a private backup directory, never the repository. Both the key backup and recovered Secret are sensitive. Compare recovered data to live Secrets without printing values. Version 0.41 heals manual Secret edits, so credential changes must be made in the SealedSecret source; check for drift and competing owners before upgrading.
+
+For controller rollback, reapply the previous reviewed upstream controller manifest and wait for rollout, preserving every sealing key and SealedSecret. Never delete the CRD as a rollback step. For disaster recovery, restore the saved key Secrets into `kube-system` before starting the controller, then apply the encrypted resources; without the original keys, the old ciphertext cannot be recovered. The October 2026 upgrade verified offline decryption, not a full replacement-cluster recovery.
+
 ```
 kubeseal (local)
    │  encrypts with controller's public key

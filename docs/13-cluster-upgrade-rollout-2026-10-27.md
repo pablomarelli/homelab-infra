@@ -1,5 +1,16 @@
 # Cluster upgrade rollout - 2026-10-27
 
+## Sealed Secrets completed - 2026-10-28
+
+- Upgraded controller `0.27.3 -> 0.41.2` using `bootstrap/sealed-secrets`, with the upstream release URL pinned and image pinned to `sha256:e63ec6ec2b12a471bf781081bd370a93ca7b7b3999e5b9243341379aeb801d0b`. Docker pull and isolated `--version` execution confirmed the candidate; the downloaded kubeseal archive passed the published SHA-256 checksum.
+- Reviewed intervening changes in the [exact-tag release notes](https://github.com/bitnami/sealed-secrets/blob/v0.41.2/RELEASE-NOTES.md): restricted template functions (0.30), scope consistency/rotation fixes (0.36), verification and rotation decryption-oracle fixes (0.39/0.40), Secret healing and dynamic key watching (0.41), and release-pipeline repairs (0.41.1/.2). No custom controller arguments are configured. Upstream manifest comparison showed unchanged RBAC, image replacement and CRD template-data documentation changes, plus resource reordering.
+- Before deployment, backed up nine keys, six SealedSecrets, Deployment and CRD under `/home/pablo/.tmp/opencode/sealed-secrets-upgrade-2026-10-28/` with private permissions; all four backup checksums passed. Candidate kubeseal recovered every live SealedSecret offline, and every recovered data field matched its live Secret. Each target had its corresponding SealedSecret controller owner. No credential drift was found before enabling healing.
+- Server dry-run and rollout passed. Controller reported 0.41.2, registered all nine existing keys and successfully reconciled all six old SealedSecrets. Live `kubeseal --validate` passed for every original resource, post-rollout credential comparisons matched, and key UIDs/data were preserved.
+- A newly sealed random synthetic credential reconciled correctly. After deliberately changing its generated Secret, the controller restored the sealed value. The initial verification command rejected base64 padding in its JSONPath argument; a subsequent direct comparison against offline recovery confirmed healing. The synthetic SealedSecret and generated Secret were deleted and deletion verified.
+- Controller pod Ready with zero restarts; both nodes Ready; all 22 ArgoCD Applications Synced/Healthy. All five ExternalSecrets and the 1Password ClusterSecretStore remained Ready. Forced notification ExternalSecret refresh completed at `2026-10-28T12:37:45Z`, proving continued provider access using the sealed bootstrap token.
+- Bootstrap ownership is now explicit: this controller has no ArgoCD Application and is maintained through the pinned overlay from any authorized management machine. Recovery/rollback procedure is in `docs/05-secret-management.md`; private backups remain outside Git. Offline recovery was tested, not a full replacement-cluster restore.
+- Follow-up disk check found no active DiskSpace alerts after the earlier npm/Docker build-cache cleanup.
+
 ## Sequence and review policy
 
 Start with Umami's security update, then review Uptime Kuma and ntfy before their individual rollouts. PostgreSQL maintenance, the K3s/Traefik pair, identity/secrets and monitoring follow in separate changes. The initial audit was a release inventory, not a complete intervening-changelog review for every component.

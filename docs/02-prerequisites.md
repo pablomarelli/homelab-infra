@@ -58,10 +58,11 @@ kubectl wait --for=condition=available deployment/argocd-server -n argocd --time
 
 The External Secrets Operator needs a 1Password service account token before it can pull any other secrets. This token is stored as a Sealed Secret so it can be committed safely.
 
-**4a. Install the Sealed Secrets controller** (ArgoCD will manage it after bootstrap, but it must exist first to decrypt the bootstrap token):
+**4a. Install the Sealed Secrets controller** (explicitly managed by this bootstrap overlay, not an ArgoCD Application; it must exist first to decrypt the bootstrap token):
 
 ```bash
-kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/latest/download/controller.yaml
+kubectl apply -k bootstrap/sealed-secrets
+kubectl rollout status deployment/sealed-secrets-controller -n kube-system --timeout=180s
 ```
 
 **4b. Apply the sealed bootstrap token:**
