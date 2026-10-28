@@ -24,7 +24,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: dozzle
-          image: amir20/dozzle:v10.6.0
+          image: amir20/dozzle:v11.3.5
           ports:
             - name: http
               containerPort: 8080
