@@ -8,7 +8,7 @@ authentik:
     user: authentik
     password: ""
 server:
-  replicas: 0
+  replicas: 1
   deploymentStrategy:
     type: Recreate
   nodeSelector:
@@ -31,7 +31,7 @@ server:
     - name: AUTHENTIK_POSTGRESQL__USER
       value: "authentik"
 worker:
-  replicas: 0
+  replicas: 1
   deploymentStrategy:
     type: Recreate
   nodeSelector:
