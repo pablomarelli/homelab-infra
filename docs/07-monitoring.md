@@ -91,10 +91,12 @@ Two webhook aliases are configured; aliases are not Discord channel names:
 
 | Webhook alias | Discord channel | Label | Used for |
 |---|---|---|---|
-| `discord-main` | `#notificaciones-infra` (user-reported replacement destination) | `notifications.argocd/channel: main` | Application deployments |
-| `discord-infra` | Not yet documented | `notifications.argocd/channel: infra` | Infrastructure changes |
+| `discord-main` | `#notificaciones-infra` | `notifications.argocd/channel: main` | Application deployments |
+| `discord-infra` | `#notificaciones-infra` | `notifications.argocd/channel: infra` | Infrastructure changes |
 
 The Discord webhook URLs are stored in the `homelab-secrets` 1Password vault, in the `argocd-notifications` item. Keep the exact field names `discord-main-webhook-url` and `discord-infra-webhook-url`; change their values when replacing webhooks, not their names. External Secrets copies them into the `argocd/argocd-notifications-secret` Kubernetes Secret hourly. Webhook display names and destination channels are configured in Discord; record their non-secret names here, never their URLs.
+
+Both fields currently contain the same working webhook URL. They are separate routing aliases, not duplicate fields to remove: the current configuration requires both. Delivery tests for both aliases returned HTTP 204 after the missing main field was restored.
 
 ### Custom disk alerts
 

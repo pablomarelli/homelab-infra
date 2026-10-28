@@ -382,3 +382,7 @@ Actual webhook delivery checks found:
 - `discord-main`: HTTP 404 with Discord code 10015, `Unknown Webhook`. Its value is identical to the pre-upgrade backup, so replacing the stale webhook is separate follow-up work. Update the `discord-main-webhook-url` field in the 1Password `argocd-notifications` item, force ExternalSecret refresh and repeat delivery verification. Do not put the webhook URL in Git or chat.
 
 The notification CLI exited zero even on the failed delivery; inspect the HTTP response/log outcome rather than relying on exit status. Logs contain sensitive webhook paths and are kept outside Git with restrictive permissions. Argo CD reconciliation and the upgrade are verified; main-channel notification delivery remains blocked on a valid replacement webhook.
+
+### Notification follow-up resolved
+
+The user replaced the webhook and restored the accidentally removed `discord-main-webhook-url` field in 1Password. Forced ExternalSecret reconciliation returned Ready. Both fields now contain the same webhook URL, targeting the user-confirmed `#notificaciones-infra` channel. Actual notification tests for both `discord-main` and `discord-infra` returned HTTP 204; response logs were checked rather than trusting the CLI exit code. The main-channel delivery blocker above is resolved. Both field names must remain present even when their values are identical.
