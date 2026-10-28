@@ -15,7 +15,7 @@ loki:
           prefix: index_
           period: 24h
 singleBinary:
-  replicas: 1
+  replicas: 0
   nodeSelector:
     homelab/power: battery-backed
   persistence:
