@@ -79,12 +79,12 @@ alloy:
         }
         // Map common level variations to standard levels
         stage.replace {
-          expression = "(warning)"
+          expression = "^warning$"
           replace    = "warn"
           source     = "level"
         }
         stage.replace {
-          expression = "(err)"
+          expression = "^err$"
           replace    = "error"
           source     = "level"
         }
