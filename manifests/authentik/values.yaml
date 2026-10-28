@@ -8,7 +8,9 @@ authentik:
     user: authentik
     password: ""
 server:
-  replicas: 1
+  replicas: 0
+  deploymentStrategy:
+    type: Recreate
   nodeSelector:
     homelab/power: battery-backed
   resources:
@@ -29,7 +31,9 @@ server:
     - name: AUTHENTIK_POSTGRESQL__USER
       value: "authentik"
 worker:
-  replicas: 1
+  replicas: 0
+  deploymentStrategy:
+    type: Recreate
   nodeSelector:
     homelab/node-role: worker
     homelab/power: non-ups
