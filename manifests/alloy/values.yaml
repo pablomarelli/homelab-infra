@@ -1,5 +1,12 @@
 alloy:
   storagePath: /var/lib/alloy
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
   configMap:
     create: true
     content: |
@@ -120,10 +127,3 @@ controller:
       operator: Equal
       value: non-ups
       effect: NoSchedule
-resources:
-  requests:
-    cpu: 50m
-    memory: 64Mi
-  limits:
-    cpu: 200m
-    memory: 256Mi
