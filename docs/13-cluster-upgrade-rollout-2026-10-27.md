@@ -1,6 +1,8 @@
 # Cluster upgrade rollout - 2026-10-27
 
-## Authentik deployed - 2026-10-28; user SSO verification pending
+## Authentik completed - 2026-10-28
+
+The user subsequently confirmed all three requested browser checks: Authentik login, authenticated Dozzle access and Grafana SSO. This resolves the remaining verification item recorded below and permits the monitoring upgrade to proceed.
 
 - Upgraded chart/server/worker and separately managed proxy from `2026.5.0` to `2026.8.5`. Reviewed official [2026.5](https://docs.goauthentik.io/releases/2026.5/) and [2026.8](https://docs.goauthentik.io/releases/2026.8/) release/patch notes, including security backports, migration fixes in 2026.8.3, proxy fixes in 2026.8.4 and certificate dependency updates in 2026.8.5. This is the next release train.
 - Compatibility findings: Rust server/proxy rewrite and stricter trusted forwarded headers require route verification; default trusted CIDRs cover the direct Traefik pod address `10.42.0.160`. No deprecated PostgreSQL connection options or custom hash_password automation are configured. PostgreSQL 16.15 remains external to the chart. Candidate chart rendering and server dry-run passed.

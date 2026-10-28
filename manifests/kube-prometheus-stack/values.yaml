@@ -52,6 +52,7 @@ grafana:
 # Prometheus configuration
 prometheus:
   prometheusSpec:
+    replicas: 0
     retention: 15d
     storageSpec:
       volumeClaimTemplate:
@@ -70,6 +71,7 @@ prometheus:
 # Alertmanager configuration (Discord will be added in Phase 8)
 alertmanager:
   alertmanagerSpec:
+    replicas: 0
     alertmanagerConfiguration:
       name: alertmanager-main
     storage:

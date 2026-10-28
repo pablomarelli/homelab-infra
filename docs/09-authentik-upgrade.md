@@ -11,7 +11,7 @@ The 2026-10-28 rollout deployed this release-train hop after an isolated databas
 | `apps/authentik.yaml` chart | `2026.5.0` | `2026.8.5` |
 | `manifests/authentik-outpost/outpost-deployment.yaml` image | `2026.5.0` | `2026.8.5` |
 
-Migration, readiness, worker health, outpost connectivity, anonymous ForwardAuth redirects and public Grafana OIDC discovery passed. Real user login, authenticated ForwardAuth and Grafana OAuth callback verification remain pending; Grafana's public entry is gated by Cloudflare Access. See `docs/13-cluster-upgrade-rollout-2026-10-27.md` for evidence and backup locations.
+Migration, readiness, worker health, outpost connectivity, anonymous ForwardAuth redirects and public Grafana OIDC discovery passed. The user subsequently confirmed successful login, authenticated Dozzle access and Grafana SSO. See `docs/13-cluster-upgrade-rollout-2026-10-27.md` for evidence and backup locations.
 
 ## Published Chart Hop Sequence
 
