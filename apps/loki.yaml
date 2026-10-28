@@ -9,9 +9,9 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://grafana.github.io/helm-charts
+    - repoURL: https://grafana-community.github.io/helm-charts
       chart: loki
-      targetRevision: 7.0.0
+      targetRevision: 20.0.2
       helm:
         valueFiles:
           - $values/manifests/loki/values.yaml
@@ -22,5 +22,8 @@ spec:
     server: https://kubernetes.default.svc
     namespace: monitoring
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
