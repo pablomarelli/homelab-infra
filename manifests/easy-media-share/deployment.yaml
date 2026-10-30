@@ -36,7 +36,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: easy-media-share
-          image: ghcr.io/pablomarelli/easy-media-share:2026.08.26-7b419031634d0b605bc3bded87cb80f9d4cd611f
+          image: ghcr.io/pablomarelli/easy-media-share:2026.08.26-68a29b63a64f5d2a830c972123d0e2d6663baefa
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
