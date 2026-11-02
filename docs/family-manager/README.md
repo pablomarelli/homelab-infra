@@ -1,32 +1,18 @@
 # Family Manager deployment
 
-Status: staged manifests, not an active ArgoCD application. Both source
-repositories and container packages must stay private. This public repository
-contains only deployment configuration and references to secrets.
+The ArgoCD applications are defined in `apps/family-manager.yaml` and run in
+namespace `family-manager`. Both source repositories and container packages must
+stay private. This public repository contains only deployment configuration and
+references to secrets.
 
-## Release and activation order
+The shared release pipeline publishes checked semantic image tags. Set
+`DEPLOY_ENABLED=true` in each application repository after verifying the first
+deployment to enable later infrastructure image updates.
 
-1. Merge the backend, frontend, and shared workflow changes. Register both
-   repositories through the `homelab-workflows` injector. Complete its credential
-   setup and publish both checked images before enabling deployment updates.
-2. Replace `release-required` in both deployment files with the exact published
-   semantic version tags. Verify authenticated pulls work with the cluster credential.
-3. Create the Authentik provider and 1Password items below.
-4. On the battery-backed node, create `/srv/family-manager/data` with owner
-   `10001:10001` and mode `0700`. Preserve any existing data. If importing a
-   previous database, stop its writer and take a backup first. Transfer the
-   complete database safely; do not copy only the `.db` file from a live writer.
-5. Add namespace `family-manager` to `bootstrap/namespaces.yaml` and apply it.
-6. Add `family` to `infrastructure/tofu/variables.tf` and apply OpenTofu. The
-   existing tunnel routes the hostname to Traefik. Confirm Cloudflare uses HTTPS
-   and does not cache `/api/*` or `/auth/*`.
-7. In an activation PR, move `docs/family-manager/activation.yaml` into
-   `apps/family-manager.yaml`. Merge only after the images, namespace, directory,
-   and secrets are ready. ArgoCD then owns reconciliation.
-8. Verify the login flow at `https://family.pablomarelli.dev`, then grant the two
-   local accounts access as described below. Enable later GitOps image updates
-   with `DEPLOY_ENABLED=true` in both application repositories. Set it to `false`
-   before initial workflow injection to publish images without deployment.
+The local data directory `/srv/family-manager/data` on the battery-backed node
+must have owner `10001:10001` and mode `0700`. Preserve existing data. If importing
+a previous database, stop its writer and take a backup first. Do not copy only
+the `.db` file from a live writer.
 
 The backend uses one replica and `Recreate` updates because SQLite uses a local
 disk. The PV has `Retain` policy and is excluded from ArgoCD pruning/deletion.
