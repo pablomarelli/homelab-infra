@@ -29,11 +29,11 @@ jobs:
           tofu -chdir=infrastructure/tofu init -backend=false -input=false
           tofu -chdir=infrastructure/tofu validate
 
-      - name: Validate staged Family Manager resources
+      - name: Validate Family Manager resources
         run: |
           go run github.com/yannh/kubeconform/cmd/kubeconform@v0.8.0 \
             -strict -summary \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             manifests/family-manager-backend manifests/family-manager-frontend \
-            docs/family-manager
+            apps/family-manager.yaml

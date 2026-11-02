@@ -14,9 +14,7 @@ spec:
   data:
     - secretKey: client-id
       remoteRef:
-        key: Family Manager OIDC
-        property: client-id
+        key: Family Manager OIDC/client-id
     - secretKey: client-secret
       remoteRef:
-        key: Family Manager OIDC
-        property: client-secret
+        key: Family Manager OIDC/client-secret

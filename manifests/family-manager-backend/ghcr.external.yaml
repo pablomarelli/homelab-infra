@@ -16,5 +16,4 @@ spec:
   data:
     - secretKey: .dockerconfigjson
       remoteRef:
-        key: Family Manager GHCR
-        property: dockerconfigjson
+        key: Family Manager GHCR/dockerconfigjson
