@@ -1,0 +1,46 @@
+# Staged outside apps/: do not activate until both images and secrets exist.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: family-manager-backend
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: main
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/family-manager-backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: family-manager
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions: [CreateNamespace=false]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: family-manager-frontend
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: main
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/family-manager-frontend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: family-manager
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions: [CreateNamespace=false]

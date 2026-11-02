@@ -1,0 +1,50 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: family-manager-local
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: family-manager-data
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  capacity:
+    # Scheduling metadata, not a disk quota.
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: family-manager-local
+  claimRef:
+    namespace: family-manager
+    name: family-manager-data
+  local:
+    path: /srv/family-manager/data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [pablo-ideapad-l340-17irh-gaming]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: family-manager-data
+  namespace: family-manager
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes: [ReadWriteOnce]
+  volumeMode: Filesystem
+  storageClassName: family-manager-local
+  volumeName: family-manager-data
+  resources:
+    requests:
+      storage: 10Gi
