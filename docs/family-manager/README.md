@@ -10,7 +10,7 @@ contains only deployment configuration and references to secrets.
    repositories through the `homelab-workflows` injector. Complete its credential
    setup and publish both checked images before enabling deployment updates.
 2. Replace `release-required` in both deployment files with the exact published
-   `sha-<commit>` tags. Verify authenticated pulls work with the cluster credential.
+   semantic version tags. Verify authenticated pulls work with the cluster credential.
 3. Create the Authentik provider and 1Password items below.
 4. On the battery-backed node, create `/srv/family-manager/data` with owner
    `10001:10001` and mode `0700`. Preserve any existing data. If importing a
@@ -25,7 +25,8 @@ contains only deployment configuration and references to secrets.
    and secrets are ready. ArgoCD then owns reconciliation.
 8. Verify the login flow at `https://family.pablomarelli.dev`, then grant the two
    local accounts access as described below. Enable later GitOps image updates
-   with `FAMILY_MANAGER_DEPLOY=true` in both application repositories.
+   with `DEPLOY_ENABLED=true` in both application repositories. Set it to `false`
+   before initial workflow injection to publish images without deployment.
 
 The backend uses one replica and `Recreate` updates because SQLite uses a local
 disk. The PV has `Retain` policy and is excluded from ArgoCD pruning/deletion.
