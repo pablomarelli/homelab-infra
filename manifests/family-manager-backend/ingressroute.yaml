@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: family-manager-backend
+  namespace: family-manager
+spec:
+  entryPoints: [web]
+  routes:
+    - match: Host(`family.pablomarelli.dev`) && (PathPrefix(`/api/`) || PathPrefix(`/auth/`))
+      kind: Rule
+      priority: 100
+      # Native OIDC owns the callback and API authentication. No forward auth.
+      services:
+        - name: family-manager-backend
+          port: 8080

@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: family-manager-backend
+  namespace: family-manager
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: family-manager-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: family-manager-backend
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        homelab/power: battery-backed
+      imagePullSecrets:
+        - name: family-manager-ghcr
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          # Replace with a verified private GHCR tag before activating ArgoCD.
+          image: ghcr.io/pablomarelli/family-manager-backend:release-required
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: AUTH_MODE
+              value: oidc
+            - name: PUBLIC_URL
+              value: https://family.pablomarelli.dev
+            - name: OIDC_ISSUER
+              value: https://auth.pablomarelli.dev/application/o/family-manager/
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: family-manager-oidc
+                  key: client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: family-manager-oidc
+                  key: client-secret
+            - name: DATABASE_PATH
+              value: /data/family.db
+            - name: HOUSEHOLD_TIMEZONE
+              value: America/Argentina/Buenos_Aires
+            - name: SESSION_TTL
+              value: 1h
+            - name: BACKUP_DIR
+              value: /data/backups
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            timeoutSeconds: 3
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: family-manager-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      terminationGracePeriodSeconds: 30
