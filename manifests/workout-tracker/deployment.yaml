@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repbook
+  namespace: repbook
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: repbook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: repbook
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        homelab/power: battery-backed
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: repbook
+          image: unpublished.invalid/repbook:blocked
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: WORKOUT_DATABASE_URL
+              value: sqlite:////app/data/workouts.db
+            - name: WORKOUT_PUBLIC_ORIGIN
+              value: https://repbook.pablomarelli.dev
+            - name: WORKOUT_SECURE_COOKIE
+              value: 'true'
+            - name: WORKOUT_AUTH_MODE
+              value: oidc
+            - name: WORKOUT_OIDC_ISSUER
+              value: https://auth.pablomarelli.dev/application/o/repbook/
+            - name: WORKOUT_OIDC_SESSION_SECONDS
+              value: '3600'
+            - name: WORKOUT_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: repbook-oidc
+                  key: client-id
+            - name: WORKOUT_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: repbook-oidc
+                  key: client-secret
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            timeoutSeconds: 3
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: repbook-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      terminationGracePeriodSeconds: 30

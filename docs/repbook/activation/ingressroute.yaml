@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: repbook
+  namespace: repbook
+spec:
+  entryPoints: [web]
+  routes:
+    - match: Host(`repbook.pablomarelli.dev`)
+      kind: Rule
+      services:
+        - name: repbook
+          port: 8000

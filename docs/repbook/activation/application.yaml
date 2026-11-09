@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: repbook
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: main
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/pablomarelli/homelab-infra.git
+    targetRevision: main
+    path: manifests/workout-tracker
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: repbook
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions: [CreateNamespace=false]
