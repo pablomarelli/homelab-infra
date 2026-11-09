@@ -1,8 +1,9 @@
 # Activate and operate Repbook
 
-The private deployment is registered in `apps/repbook.yaml`. The namespace is
-declared in `bootstrap/namespaces.yaml`. The public route remains parked in
-`activation/ingressroute.yaml`; DNS is not enabled yet.
+The deployment is registered in `apps/repbook.yaml`. The namespace is
+declared in `bootstrap/namespaces.yaml`. The public route is in
+`manifests/workout-tracker/ingressroute.yaml`, with DNS declared in OpenTofu.
+The intended endpoint is `https://repbook.pablomarelli.dev`.
 
 The bundle plans one server on port 8000 with one retained local SQLite
 directory. Registry access uses an ESO-managed `repbook-ghcr` secret sourced
@@ -39,7 +40,15 @@ remote repositories, live Applications, or manual cluster changes.
 A passing check is static configuration evidence only. It does not prove image
 publication, image pull access, cluster admission, storage health, trusted TLS,
 backups, or physical iPhone behavior. The `--staged` option tests historical
-inactive fixtures. The default checks the private deployment.
+inactive fixtures. The default checks the active deployment and requires DNS
+registration when the public route is present.
+
+Private activation passed: ArgoCD reported Synced and Healthy, both external
+secrets synchronized, and the volume bound. The running image digest matched
+the registry digest above. `/api/health` returned `ok` and `/api/auth-config`
+returned `oidc`. A storage marker survived pod replacement and SQLite integrity
+checks passed before and after replacement. Public authentication acceptance
+and physical-device checks remain separate from these private checks.
 
 ## Publish a checked release before activation
 
