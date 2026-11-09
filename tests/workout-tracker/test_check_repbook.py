@@ -18,9 +18,10 @@ CONTAINER = (*POD, "containers", 0)
 
 
 @pytest.mark.parametrize(
-    "fault", [None, "image", "pull-secret", "namespace", "credential", "second-writer"]
+    "fault",
+    [None, "image", "pull-secret", "namespace", "credential", "second-writer", "dns", "route"],
 )
-def test_private_activation(tmp_path: Path, fault: str | None) -> None:
+def test_active_deployment(tmp_path: Path, fault: str | None) -> None:
     for directory in ("apps", "bootstrap", "infrastructure", "manifests", "docs/repbook"):
         shutil.copytree(ROOT / directory, tmp_path / directory)
     path = tmp_path / DEPLOYMENT
@@ -38,6 +39,12 @@ def test_private_activation(tmp_path: Path, fault: str | None) -> None:
     elif fault == "credential":
         secret = tmp_path / RUNTIME / "ghcr.external.yaml"
         secret.write_text(secret.read_text().replace("Family Manager GHCR", "Other"))
+    elif fault == "dns":
+        variables = tmp_path / "infrastructure/tofu/variables.tf"
+        variables.write_text(variables.read_text().replace(', "repbook"', ""))
+    elif fault == "route":
+        route = tmp_path / RUNTIME / "ingressroute.yaml"
+        route.write_text(route.read_text().replace("port: 8000", "port: 80"))
     path.write_text(yaml.safe_dump(deployment))
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--root", str(tmp_path)],
@@ -59,6 +66,12 @@ def repo(tmp_path: Path) -> Path:
         "docs/repbook",
     ):
         shutil.copytree(ROOT / directory, tmp_path / directory)
+    (tmp_path / "docs/repbook/activation").mkdir(exist_ok=True)
+    (tmp_path / RUNTIME / "ingressroute.yaml").rename(
+        tmp_path / "docs/repbook/activation/ingressroute.yaml"
+    )
+    variables = tmp_path / "infrastructure/tofu/variables.tf"
+    variables.write_text(variables.read_text().replace(', "repbook"', ""))
     (tmp_path / "apps/repbook.yaml").rename(tmp_path / "docs/repbook/activation/application.yaml")
     namespaces = list(yaml.safe_load_all((tmp_path / "bootstrap/namespaces.yaml").read_text()))
     namespace = next(doc for doc in namespaces if doc["metadata"]["name"] == "repbook")

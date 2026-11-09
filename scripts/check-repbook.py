@@ -131,7 +131,7 @@ def terraform_static_values(path: Path) -> list[str]:
     return values
 
 
-def check_registration(root: Path, active: bool = False) -> None:
+def check_registration(root: Path, active: bool = False, public: bool = False) -> None:
     for required in (
         "apps",
         "bootstrap/namespaces.yaml",
@@ -228,6 +228,9 @@ def check_registration(root: Path, active: bool = False) -> None:
                 if path.suffix == ".tf"
                 else list(yaml.load_all(path.read_text(), Loader=UniqueKeyLoader))
             )
+            if public and path == root / "infrastructure/tofu/variables.tf":
+                require(values.count("repbook") == 1, "Require one Repbook DNS registration")
+                values = [value for value in values if value != "repbook"]
             if active and path == root / "bootstrap/namespaces.yaml":
                 values = [
                     doc
@@ -243,6 +246,9 @@ def check_registration(root: Path, active: bool = False) -> None:
 def check_staged(root: Path, active: bool = False) -> None:
     bundle: dict[str, Resource] = {}
     files = dict(FILES)
+    public = active and (root / RUNTIME / "ingressroute.yaml").exists()
+    if public:
+        files[f"{RUNTIME}/ingressroute.yaml"] = files.pop(f"{PARKED}/ingressroute.yaml")
     if active:
         files["apps/repbook.yaml"] = files.pop(f"{PARKED}/application.yaml")
         files.pop(f"{PARKED}/namespace.yaml")
@@ -289,7 +295,7 @@ def check_staged(root: Path, active: bool = False) -> None:
         require(
             {
                 str(path.relative_to(root))
-                for path in (root / directory).iterdir()
+                for path in ((root / directory).iterdir() if (root / directory).exists() else [])
                 if not (active and path.name == "ghcr.external.yaml")
             }
             == {path for path in files if str(Path(path).parent) == directory},
@@ -589,7 +595,7 @@ def check_staged(root: Path, active: bool = False) -> None:
         },
         "Park the whole-host same-origin route without forward auth",
     )
-    check_registration(root, active)
+    check_registration(root, active, public)
 
 
 def main() -> int:
