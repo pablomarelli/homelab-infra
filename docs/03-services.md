@@ -49,6 +49,7 @@ The status page uses route-level auth splitting via Traefik IngressRoutes:
 | Service | Namespace | URL | Auth | Source |
 |---|---|---|---|---|
 | dev-portfolio | `portfolio` | `portfolio.pablomarelli.dev` | None (public) | `manifests/dev-portfolio/` |
+| Data Library | `data-library` | `data.pablomarelli.dev` | None (public) | `manifests/data-library/` |
 | finance-manager | `finance` | `finance.pablomarelli.dev` | App-level | `github.com/PabloMarelli/finance-manager` |
 | Forgejo | `forgejo` | `git.pablomarelli.dev` | Forgejo native | `manifests/forgejo/` |
 | Home Assistant | `home-assistant` | `home.pablomarelli.dev` | App-level | `github.com/PabloMarelli/home-assistant` |

@@ -26,7 +26,8 @@ Traefik (ingress controller, k3s default)
          ├─► Umami dashboard  analytics.pablomarelli.dev
          ├─► Umami collector  analytics-collector.pablomarelli.dev
          ├─► Dotfiles         dotfiles.pablomarelli.dev → raw GitHub install.sh
-         ├─► Portfolio        portfolio.pablomarelli.dev
+          ├─► Portfolio        portfolio.pablomarelli.dev
+          ├─► Data Library     data.pablomarelli.dev
          ├─► Finance Manager  finance.pablomarelli.dev
          ├─► Forgejo           git.pablomarelli.dev
          ├─► Home Assistant    home.pablomarelli.dev
