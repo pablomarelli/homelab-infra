@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["PyYAML==6.0.3"]
 # ///
-"""Check only the inactive Repbook bundle. Never contact or change a cluster."""
+"""Check Repbook deployment configuration without contacting a cluster."""
 
 import argparse
 import posixpath
@@ -131,7 +131,7 @@ def terraform_static_values(path: Path) -> list[str]:
     return values
 
 
-def check_registration(root: Path) -> None:
+def check_registration(root: Path, active: bool = False) -> None:
     for required in (
         "apps",
         "bootstrap/namespaces.yaml",
@@ -143,6 +143,8 @@ def check_registration(root: Path) -> None:
         if path.suffix not in {".yaml", ".yml", ".json"}:
             continue
         for app in documents(path):
+            if active and path == root / "apps/repbook.yaml":
+                continue
             require(
                 app["kind"] == "Application",
                 f"{path}: unsupported registration resource",
@@ -226,21 +228,74 @@ def check_registration(root: Path) -> None:
                 if path.suffix == ".tf"
                 else list(yaml.load_all(path.read_text(), Loader=UniqueKeyLoader))
             )
+            if active and path == root / "bootstrap/namespaces.yaml":
+                values = [
+                    doc
+                    for doc in values
+                    if doc and doc.get("metadata", {}).get("name") != "repbook"
+                ]
             require(
                 not references_repbook(values),
                 f"{path}: active Repbook reference",
             )
 
 
-def check_staged(root: Path) -> None:
+def check_staged(root: Path, active: bool = False) -> None:
     bundle: dict[str, Resource] = {}
+    files = dict(FILES)
+    if active:
+        files["apps/repbook.yaml"] = files.pop(f"{PARKED}/application.yaml")
+        files.pop(f"{PARKED}/namespace.yaml")
+        namespaces = [
+            doc
+            for doc in documents(root / "bootstrap/namespaces.yaml")
+            if doc["metadata"]["name"] == "repbook"
+        ]
+        require(
+            len(namespaces) == 1
+            and namespaces[0]
+            == {"apiVersion": "v1", "kind": "Namespace", "metadata": {"name": "repbook"}},
+            "Require one canonical Repbook namespace",
+        )
+        bundle["Namespace"] = namespaces[0]
+        pull = documents(root / RUNTIME / "ghcr.external.yaml")
+        require(
+            pull
+            == [
+                {
+                    "apiVersion": "external-secrets.io/v1",
+                    "kind": "ExternalSecret",
+                    "metadata": {"name": "repbook-ghcr", "namespace": "repbook"},
+                    "spec": {
+                        "refreshInterval": "1h",
+                        "secretStoreRef": {"name": "onepassword", "kind": "ClusterSecretStore"},
+                        "target": {
+                            "name": "repbook-ghcr",
+                            "creationPolicy": "Owner",
+                            "template": {"type": "kubernetes.io/dockerconfigjson"},
+                        },
+                        "data": [
+                            {
+                                "secretKey": ".dockerconfigjson",
+                                "remoteRef": {"key": "Family Manager GHCR/dockerconfigjson"},
+                            }
+                        ],
+                    },
+                }
+            ],
+            "Require the vault-managed registry credential",
+        )
     for directory in (RUNTIME, PARKED):
         require(
-            {str(path.relative_to(root)) for path in (root / directory).iterdir()}
-            == {path for path in FILES if str(Path(path).parent) == directory},
+            {
+                str(path.relative_to(root))
+                for path in (root / directory).iterdir()
+                if not (active and path.name == "ghcr.external.yaml")
+            }
+            == {path for path in files if str(Path(path).parent) == directory},
             f"{directory}: unexpected files or missing staged files",
         )
-    for filename, kinds in FILES.items():
+    for filename, kinds in files.items():
         resources = documents(root / filename)
         require(
             tuple(doc["kind"] for doc in resources) == kinds,
@@ -304,9 +359,23 @@ def check_staged(root: Path) -> None:
     )
     require(len(pod["containers"]) == 1, "Require one server container")
     container = pod["containers"][0]
+    if active:
+        require(
+            pod.get("imagePullSecrets") == [{"name": "repbook-ghcr"}],
+            "Require the Repbook pull secret",
+        )
     require(
         container["name"] == "repbook"
-        and container["image"] == "unpublished.invalid/repbook:blocked",
+        and (
+            bool(
+                re.fullmatch(
+                    r"ghcr.io/pablomarelli/workout-tracker:\d+\.\d+\.\d+-[0-9a-f]{40}",
+                    container["image"],
+                )
+            )
+            if active
+            else container["image"] == "unpublished.invalid/repbook:blocked"
+        ),
         "Require the unpublished image sentinel; a tag is not publication evidence",
     )
     require(
@@ -520,15 +589,18 @@ def check_staged(root: Path) -> None:
         },
         "Park the whole-host same-origin route without forward auth",
     )
-    check_registration(root)
+    check_registration(root, active)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument(
+        "--staged", action="store_true", help="Validate an inactive staging fixture"
+    )
     args = parser.parse_args()
     try:
-        check_staged(args.root.resolve())
+        check_staged(args.root.resolve(), active=not args.staged)
     except (
         OSError,
         ValueError,
@@ -538,10 +610,10 @@ def main() -> int:
         AttributeError,
         yaml.YAMLError,
     ) as error:
-        print(f"Repbook staged check failed: {error}", file=sys.stderr)
+        print(f"Repbook configuration check failed: {error}", file=sys.stderr)
         return 1
     print(
-        "Repbook static staged configuration passed. "
+        "Repbook static configuration passed. "
         "No image, cluster, DNS, TLS, backup, or device validation was performed."
     )
     return 0

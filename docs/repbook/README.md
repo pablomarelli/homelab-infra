@@ -1,14 +1,20 @@
 # Activate and operate Repbook
 
-This PR is inactive. `unpublished.invalid/repbook:blocked` is a non-deployable
-sentinel, not a published image. Do not apply these files or register the
-Application until a later activation PR has approval.
+The private deployment is registered in `apps/repbook.yaml`. The namespace is
+declared in `bootstrap/namespaces.yaml`. The public route remains parked in
+`activation/ingressroute.yaml`; DNS is not enabled yet.
 
 The bundle plans one server on port 8000 with one retained local SQLite
-directory. The Application, namespace, and public route stay in `activation/`.
-File locations separate staging, private activation, and public exposure.
+directory. Registry access uses an ESO-managed `repbook-ghcr` secret sourced
+from the existing `Family Manager GHCR` vault item.
 
-## Check the staged configuration
+Initial release: `a3ebc56ec1b23a3925935c88026d116f66c2da99`.
+Image: `ghcr.io/pablomarelli/workout-tracker:0.1.0-a3ebc56ec1b23a3925935c88026d116f66c2da99`.
+Registry index digest: `sha256:89b1e0dbc565238e7e613b0bb23da3c9387ce2740a65fa7ca4e53c3c1a5c8da7`.
+Authenticated registry inspection confirmed Linux/AMD64 support. The node's
+`/srv/repbook/data` directory was created with owner `10001:10001` and mode `0700`.
+
+## Check the configuration
 
 Run these commands from the repository root with Python 3.12 or later and uv.
 The script pins PyYAML in its PEP 723 dependency metadata.
@@ -19,12 +25,12 @@ uv run --no-project --with PyYAML==6.0.3 --with pytest python -m pytest -q tests
 ```
 
 The read-only check validates the resource references, SQLite restrictions,
-runtime restrictions, and inactive file locations. It inspects all checked-in
+runtime restrictions, private registration, and vault-managed pull secret. It inspects all checked-in
 Application sources in `apps/`, including HTTPS and SSH repository URLs.
 It rejects local Helm, Kustomize, and plugin sources that it cannot inspect.
 It also rejects Jsonnet files and symlinks inside local source directories.
-It also rejects Repbook references in the active manifest, bootstrap, and
-infrastructure trees. It checks decoded YAML and JSON values, including Helm
+It rejects unexpected Repbook references outside the canonical deployment and
+namespace. It checks decoded YAML and JSON values, including Helm
 values without resource metadata. For checked-in Terraform files, it removes
 comments and decodes quoted string escapes. It does not evaluate Terraform
 expressions or remote plans. It does not render unrelated charts or inspect
@@ -32,9 +38,8 @@ remote repositories, live Applications, or manual cluster changes.
 
 A passing check is static configuration evidence only. It does not prove image
 publication, image pull access, cluster admission, storage health, trusted TLS,
-backups, or physical iPhone behavior. Replace this staging-only gate with checks
-for the approved state in the activation PR. Do not disable it while keeping a
-claim that the deployment is still staged.
+backups, or physical iPhone behavior. The `--staged` option tests historical
+inactive fixtures. The default checks the private deployment.
 
 ## Publish a checked release before activation
 
