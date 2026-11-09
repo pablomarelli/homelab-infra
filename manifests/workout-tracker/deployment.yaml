@@ -16,6 +16,8 @@ spec:
         app.kubernetes.io/name: repbook
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: repbook-ghcr
       nodeSelector:
         homelab/power: battery-backed
       securityContext:
@@ -28,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: repbook
-          image: unpublished.invalid/repbook:blocked
+          image: ghcr.io/pablomarelli/workout-tracker:0.1.0-a3ebc56ec1b23a3925935c88026d116f66c2da99
           ports:
             - name: http
               containerPort: 8000

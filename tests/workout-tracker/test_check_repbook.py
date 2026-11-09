@@ -17,6 +17,38 @@ POD = ("spec", "template", "spec")
 CONTAINER = (*POD, "containers", 0)
 
 
+@pytest.mark.parametrize(
+    "fault", [None, "image", "pull-secret", "namespace", "credential", "second-writer"]
+)
+def test_private_activation(tmp_path: Path, fault: str | None) -> None:
+    for directory in ("apps", "bootstrap", "infrastructure", "manifests", "docs/repbook"):
+        shutil.copytree(ROOT / directory, tmp_path / directory)
+    path = tmp_path / DEPLOYMENT
+    deployment = yaml.safe_load(path.read_text())
+    pod = deployment["spec"]["template"]["spec"]
+    if fault == "image":
+        pod["containers"][0]["image"] = "unpublished.invalid/repbook:blocked"
+    elif fault == "pull-secret":
+        pod.pop("imagePullSecrets")
+    elif fault == "second-writer":
+        deployment["spec"]["replicas"] = 2
+    elif fault == "namespace":
+        namespaces = tmp_path / "bootstrap/namespaces.yaml"
+        namespaces.write_text(namespaces.read_text().replace("name: repbook", "name: other"))
+    elif fault == "credential":
+        secret = tmp_path / RUNTIME / "ghcr.external.yaml"
+        secret.write_text(secret.read_text().replace("Family Manager GHCR", "Other"))
+    path.write_text(yaml.safe_dump(deployment))
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--root", str(tmp_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert (result.returncode == 0) == (fault is None), result.stderr
+
+
 @pytest.fixture
 def repo(tmp_path: Path) -> Path:
     for directory in (
@@ -27,12 +59,25 @@ def repo(tmp_path: Path) -> Path:
         "docs/repbook",
     ):
         shutil.copytree(ROOT / directory, tmp_path / directory)
+    (tmp_path / "apps/repbook.yaml").rename(tmp_path / "docs/repbook/activation/application.yaml")
+    namespaces = list(yaml.safe_load_all((tmp_path / "bootstrap/namespaces.yaml").read_text()))
+    namespace = next(doc for doc in namespaces if doc["metadata"]["name"] == "repbook")
+    (tmp_path / "docs/repbook/activation/namespace.yaml").write_text(yaml.safe_dump(namespace))
+    (tmp_path / "bootstrap/namespaces.yaml").write_text(
+        yaml.safe_dump_all([doc for doc in namespaces if doc != namespace])
+    )
+    (tmp_path / RUNTIME / "ghcr.external.yaml").unlink()
+    deployment = yaml.safe_load((tmp_path / DEPLOYMENT).read_text())
+    pod = deployment["spec"]["template"]["spec"]
+    pod.pop("imagePullSecrets")
+    pod["containers"][0]["image"] = "unpublished.invalid/repbook:blocked"
+    (tmp_path / DEPLOYMENT).write_text(yaml.safe_dump(deployment))
     return tmp_path
 
 
 def run_check(root: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(SCRIPT), "--root", str(root)],
+        [sys.executable, str(SCRIPT), "--staged", "--root", str(root)],
         capture_output=True,
         text=True,
         check=False,
@@ -48,10 +93,10 @@ def reject(root: Path, diagnostic: str) -> None:
     assert "passed" not in result.stdout
 
 
-def test_checked_in_bundle() -> None:
-    result = run_check(ROOT)
+def test_checked_in_bundle(repo: Path) -> None:
+    result = run_check(repo)
     assert result.returncode == 0, result.stderr
-    assert "static staged configuration passed" in result.stdout
+    assert "static configuration passed" in result.stdout
     assert "No image, cluster, DNS, TLS, backup, or device validation" in result.stdout
 
 
@@ -240,7 +285,7 @@ def test_local_source_symlink_to_parked_resources(repo: Path) -> None:
 def test_no_active_namespace_route_or_dns(repo: Path, registration: str) -> None:
     if registration == "dns":
         path = repo / "infrastructure/tofu/variables.tf"
-        path.write_text(path.read_text().replace('"family"]', '"family", "repbook"]'))
+        path.write_text(path.read_text() + '\nlocals { forbidden = "repbook" }\n')
     else:
         source = "namespace" if registration == "namespace" else "ingressroute"
         destination = (
@@ -302,7 +347,7 @@ def test_active_tree_yaml_still_rejects_duplicate_keys(repo: Path) -> None:
 @pytest.mark.parametrize("name", [r"rep\u0062ook", r"rep\U00000062ook"])
 def test_decoded_terraform_dns_strings(repo: Path, name: str) -> None:
     path = repo / "infrastructure/tofu/variables.tf"
-    path.write_text(path.read_text().replace('"family"]', f'"family", "{name}"]'))
+    path.write_text(path.read_text() + f'\nlocals {{ forbidden = "{name}" }}\n')
     reject(repo, "active Repbook reference")
 
 
@@ -341,7 +386,7 @@ def test_terraform_comment_markers_inside_strings_are_values(repo: Path, value: 
 
 def test_rejects_duplicate_keys_in_an_otherwise_valid_bundle(repo: Path) -> None:
     path = repo / DEPLOYMENT
-    image = "          image: unpublished.invalid/repbook:blocked\n"
+    image = next(line for line in path.read_text().splitlines(keepends=True) if "image:" in line)
     path.write_text(path.read_text().replace(image, image + image))
     reject(repo, "Duplicate YAML key: image")
 
@@ -349,7 +394,7 @@ def test_rejects_duplicate_keys_in_an_otherwise_valid_bundle(repo: Path) -> None
 @pytest.mark.parametrize("contents", ["kind: [\n", "- not-a-resource\n"])
 def test_rejects_malformed_documents(repo: Path, contents: str) -> None:
     (repo / DEPLOYMENT).write_text(contents)
-    reject(repo, "Repbook staged check failed")
+    reject(repo, "Repbook configuration check failed")
 
 
 def test_rejects_an_extra_runtime_resource(repo: Path) -> None:
