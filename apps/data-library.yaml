@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: data-library
+  namespace: argocd
+  labels:
+    notifications.argocd/channel: main
+    notifications.argocd/profile: app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/PabloMarelli/homelab-infra.git
+    targetRevision: HEAD
+    path: manifests/data-library
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: data-library
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

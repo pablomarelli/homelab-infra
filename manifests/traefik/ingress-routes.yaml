@@ -1,4 +1,20 @@
 ---
+# Data library - Public datasets and charts
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: data-library
+  namespace: data-library
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`data.pablomarelli.dev`)
+      kind: Rule
+      services:
+        - name: data-library-svc
+          port: 80
+---
 # Grafana - No forward auth (uses native OAuth)
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
