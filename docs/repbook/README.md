@@ -115,7 +115,8 @@ Match Family Manager's native OIDC pattern, without forward-auth middleware:
 - Exact redirect: `https://repbook.pablomarelli.dev/auth/callback`.
 - Per-provider issuer: `https://auth.pablomarelli.dev/application/o/repbook/`.
 - Stable subject identifier; enable `openid`, `profile`, and `email` scopes.
-- Signed ID tokens must contain `email_verified=true`. Keep encryption disabled.
+- Email is contact information, not an account-linking identifier. The default
+  Authentik `email` scope with `email_verified=false` is supported. Keep encryption disabled.
 - Restrict application access to the intended Authentik group before exposure.
 - Store `client-id` and `client-secret` in the `Repbook OIDC` item in the
   `homelab-secrets` vault. The staged ExternalSecret creates `repbook-oidc`.
