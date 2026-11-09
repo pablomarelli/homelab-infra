@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: repbook-oidc
+  namespace: repbook
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: repbook-oidc
+    creationPolicy: Owner
+  data:
+    - secretKey: client-id
+      remoteRef:
+        key: Repbook OIDC/client-id
+    - secretKey: client-secret
+      remoteRef:
+        key: Repbook OIDC/client-secret
