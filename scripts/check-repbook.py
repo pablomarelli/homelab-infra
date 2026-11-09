@@ -26,6 +26,7 @@ FILES = {
     ),
     f"{RUNTIME}/service.yaml": ("Service",),
     f"{RUNTIME}/network-policy.yaml": ("NetworkPolicy",),
+    f"{RUNTIME}/oidc.external.yaml": ("ExternalSecret",),
     f"{PARKED}/application.yaml": ("Application",),
     f"{PARKED}/namespace.yaml": ("Namespace",),
     f"{PARKED}/ingressroute.yaml": ("IngressRoute",),
@@ -37,6 +38,7 @@ IDENTITIES = {
     "PersistentVolumeClaim": ("v1", "repbook", "repbook-data"),
     "Service": ("v1", "repbook", "repbook"),
     "NetworkPolicy": ("networking.k8s.io/v1", "repbook", "repbook"),
+    "ExternalSecret": ("external-secrets.io/v1", "repbook", "repbook-oidc"),
     "Application": ("argoproj.io/v1alpha1", "argocd", "repbook"),
     "Namespace": ("v1", "", "repbook"),
     "IngressRoute": ("traefik.io/v1alpha1", "repbook", "repbook"),
@@ -52,7 +54,7 @@ def require(condition: bool, message: str) -> None:
 class UniqueKeyLoader(yaml.SafeLoader):
     def construct_mapping(self, node: yaml.Node, deep: bool = False) -> dict[Hashable, Any]:
         if not isinstance(node, yaml.MappingNode):
-            raise ValueError("Expected a YAML mapping")
+            raise TypeError("Expected a YAML mapping")
         result: dict[Hashable, Any] = {}
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
@@ -130,7 +132,11 @@ def terraform_static_values(path: Path) -> list[str]:
 
 
 def check_registration(root: Path) -> None:
-    for required in ("apps", "bootstrap/namespaces.yaml", "infrastructure/tofu/variables.tf"):
+    for required in (
+        "apps",
+        "bootstrap/namespaces.yaml",
+        "infrastructure/tofu/variables.tf",
+    ):
         require((root / required).exists(), f"Missing repository input: {required}")
     protected = [(root / RUNTIME).resolve(), (root / "docs/repbook").resolve()]
     for path in (root / "apps").rglob("*"):
@@ -315,13 +321,38 @@ def check_staged(root: Path) -> None:
         "WORKOUT_DATABASE_URL": "sqlite:////app/data/workouts.db",
         "WORKOUT_PUBLIC_ORIGIN": "https://repbook.pablomarelli.dev",
         "WORKOUT_SECURE_COOKIE": "true",
+        "WORKOUT_AUTH_MODE": "oidc",
+        "WORKOUT_OIDC_ISSUER": "https://auth.pablomarelli.dev/application/o/repbook/",
+        "WORKOUT_OIDC_SESSION_SECONDS": "3600",
     }
     env = container["env"]
     require(
-        len(env) == len(expected_env)
-        and all(set(item) == {"name", "value"} for item in env)
-        and {item["name"]: item["value"] for item in env} == expected_env,
+        env
+        == [
+            *({"name": name, "value": value} for name, value in expected_env.items()),
+            {
+                "name": "WORKOUT_OIDC_CLIENT_ID",
+                "valueFrom": {"secretKeyRef": {"name": "repbook-oidc", "key": "client-id"}},
+            },
+            {
+                "name": "WORKOUT_OIDC_CLIENT_SECRET",
+                "valueFrom": {"secretKeyRef": {"name": "repbook-oidc", "key": "client-secret"}},
+            },
+        ],
         "Require the SQLite path, exact HTTPS origin, and secure cookies",
+    )
+    require(
+        bundle["ExternalSecret"]["spec"]
+        == {
+            "refreshInterval": "1h",
+            "secretStoreRef": {"name": "onepassword", "kind": "ClusterSecretStore"},
+            "target": {"name": "repbook-oidc", "creationPolicy": "Owner"},
+            "data": [
+                {"secretKey": field, "remoteRef": {"key": f"Repbook OIDC/{field}"}}
+                for field in ("client-id", "client-secret")
+            ],
+        },
+        "Require OIDC credentials from the existing 1Password secret store",
     )
     require(
         container["securityContext"]

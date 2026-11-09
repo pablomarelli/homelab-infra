@@ -39,6 +39,22 @@ spec:
               value: https://repbook.pablomarelli.dev
             - name: WORKOUT_SECURE_COOKIE
               value: 'true'
+            - name: WORKOUT_AUTH_MODE
+              value: oidc
+            - name: WORKOUT_OIDC_ISSUER
+              value: https://auth.pablomarelli.dev/application/o/repbook/
+            - name: WORKOUT_OIDC_SESSION_SECONDS
+              value: '3600'
+            - name: WORKOUT_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: repbook-oidc
+                  key: client-id
+            - name: WORKOUT_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: repbook-oidc
+                  key: client-secret
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

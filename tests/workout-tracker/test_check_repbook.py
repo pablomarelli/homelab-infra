@@ -73,7 +73,13 @@ def test_temporary_repository_is_read_only_and_repeatable(repo: Path) -> None:
 @pytest.mark.parametrize(
     ("filename", "document", "keys", "value", "diagnostic"),
     [
-        (DEPLOYMENT, 0, ("apiVersion",), "extensions/v1beta1", "wrong resource identity"),
+        (
+            DEPLOYMENT,
+            0,
+            ("apiVersion",),
+            "extensions/v1beta1",
+            "wrong resource identity",
+        ),
         (DEPLOYMENT, 0, ("spec", "replicas"), 2, "one SQLite writer"),
         (DEPLOYMENT, 0, ("spec", "strategy", "type"), "RollingUpdate", "Recreate"),
         (
@@ -109,6 +115,21 @@ def test_temporary_repository_is_read_only_and_repeatable(repo: Path) -> None:
             "exact HTTPS origin",
         ),
         (DEPLOYMENT, 0, (*CONTAINER, "env", 2, "value"), "false", "secure cookies"),
+        (DEPLOYMENT, 0, (*CONTAINER, "env", 3, "value"), "local", "secure cookies"),
+        (
+            DEPLOYMENT,
+            0,
+            (*CONTAINER, "env", 6, "valueFrom", "secretKeyRef", "name"),
+            "other",
+            "secure cookies",
+        ),
+        (
+            f"{RUNTIME}/oidc.external.yaml",
+            0,
+            ("spec", "data", 1, "remoteRef", "key"),
+            "Other/client-secret",
+            "OIDC credentials",
+        ),
         (DEPLOYMENT, 0, (*CONTAINER, "ports", 0, "containerPort"), 8080, "port 8000"),
         (
             DEPLOYMENT,
@@ -246,7 +267,10 @@ def test_no_active_namespace_route_or_dns(repo: Path, registration: str) -> None
             "manifests/traefik/escaped.yaml",
             'routes:\n  - match: "Host(`rep\\u0062ook.pablomarelli.dev`)"\n',
         ),
-        ("manifests/alloy/escaped-values.yaml", 'hosts: ["rep\\u0062ook.pablomarelli.dev"]\n'),
+        (
+            "manifests/alloy/escaped-values.yaml",
+            'hosts: ["rep\\u0062ook.pablomarelli.dev"]\n',
+        ),
     ],
 )
 def test_decoded_yaml_and_json_references(repo: Path, filename: str, contents: str) -> None:
@@ -301,7 +325,13 @@ def test_unrelated_terraform_comments_and_literal_escapes_are_allowed(
 
 
 @pytest.mark.parametrize(
-    "value", ["https://repbook.pablomarelli.dev", "#repbook", "/*repbook*/", r"\"rep\u0062ook\""]
+    "value",
+    [
+        "https://repbook.pablomarelli.dev",
+        "#repbook",
+        "/*repbook*/",
+        r"\"rep\u0062ook\"",
+    ],
 )
 def test_terraform_comment_markers_inside_strings_are_values(repo: Path, value: str) -> None:
     path = repo / "infrastructure/tofu/variables.tf"

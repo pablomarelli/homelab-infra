@@ -41,23 +41,24 @@ claim that the deployment is still staged.
 Follow [Adding a Service](../04-adding-a-service.md) for shared pipeline ownership.
 Complete these release-system changes outside this PR.
 
-1. Extend `homelab-workflows` to support this project's uv lockfile and
-   `pyproject.toml` version source. The current Python actions assume Pipenv and
-   bumpversion. Do not add an application-owned publisher or edit injected
-   workflows by hand.
+1. Merge the shared `uv-pnpm` support in `homelab-workflows`. It reads the
+   `pyproject.toml` version and preserves application-owned CI. Use the shared
+   injector rather than editing its generated deployment workflow.
 2. Preserve the app's backend, frontend, container, and browser checks. Require
    those checks for the exact release revision, including any version commit,
    before publication. Local uncommitted app work is not part of a remote release.
 3. Register `workout-tracker` in the shared workflow project matrix. Configure
-   `REPOS_TOKEN`, `INFRA_REPO_TOKEN`, and `APP_NAMESPACE=repbook` through the
+   the injector's `REPOS_TOKEN`, and the application's `NODE_AUTH_TOKEN`,
+   `INFRA_REPO_TOKEN`, and `APP_NAMESPACE=repbook` through the
    approved secret and variable stores. Publishing needs `GITHUB_TOKEN` with
    `packages: write`. Never put credentials in this repository.
 4. Set the app repository variable `DEPLOY_ENABLED=false` **before** the initial
    workflow injection. Injection can trigger a main-branch release. Verify that
    the selected shared workflow respects this variable.
-5. Inject the supported workflow without replacing app checks. Run its manual
-   `publish-only=true` path. Keep infrastructure updates disabled throughout
-   initial publication and private activation.
+5. Inject the supported workflow without replacing app checks. A successful
+   same-repository main-push **CI** run triggers publication of that exact
+   revision. Keep infrastructure updates disabled throughout initial publication
+   and private activation. Rerun CI to retry publication.
 6. Verify that the exact checked image was pushed and is pullable from the
    cluster's execution environment. Verify its operating system and CPU
    architecture against the selected node. Record the release revision, image
@@ -99,18 +100,31 @@ Do not combine this step with public exposure.
    IngressRoute parked and leave DNS unchanged. After approval, let ArgoCD
    reconcile the private deployment. Confirm image pull, volume binding,
    readiness, and restart persistence without opening a public route.
-7. From a trusted terminal, bootstrap the owner interactively in the running
-   Deployment before public exposure.
+7. Configure Authentik and confirm that External Secrets has synchronized the
+   provider credentials before testing login. New installations create regular
+   accounts on first permitted OIDC login. For existing accounts, follow the
+   application's `docs/oidc.md` migration guide and run `backend.link_identity`
+   from a trusted terminal. Email matching alone never transfers existing data.
 
-```sh
-kubectl -n repbook exec -it deployment/repbook -- python -m backend.bootstrap
-```
+## Authentik configuration
 
-Enter the owner's email and password at the prompts. Do not put passwords in
-arguments, scripts, logs, or Git. Bootstrap refuses if any account exists.
-It is not a destructive retry procedure. Do not remove accounts or replace the
-database to make a retry succeed. Keep real account IDs, test accounts, local
-databases, and credentials out of this public repository.
+Match Family Manager's native OIDC pattern, without forward-auth middleware:
+
+- Application slug: `repbook`.
+- Confidential authorization-code provider with PKCE and RSA/RS256 signing.
+- Exact redirect: `https://repbook.pablomarelli.dev/auth/callback`.
+- Per-provider issuer: `https://auth.pablomarelli.dev/application/o/repbook/`.
+- Stable subject identifier; enable `openid`, `profile`, and `email` scopes.
+- Signed ID tokens must contain `email_verified=true`. Keep encryption disabled.
+- Restrict application access to the intended Authentik group before exposure.
+- Store `client-id` and `client-secret` in the `Repbook OIDC` item in the
+  `homelab-secrets` vault. The staged ExternalSecret creates `repbook-oidc`.
+
+The app needs outbound HTTPS to discovery, token, and signing-key endpoints.
+The current network policy restricts ingress only. App sessions last one hour.
+Logout revokes the app session, not Authentik SSO. Removing Authentik access
+blocks future logins but does not immediately revoke existing app sessions or
+erase offline device data. No back-channel logout is implemented.
 
 The private rollout does not establish browser login over plain HTTP.
 `WORKOUT_PUBLIC_ORIGIN` remains `https://repbook.pablomarelli.dev`, and cookies
@@ -119,7 +133,7 @@ same origin. A plain HTTP port-forward is not an equivalent authentication test.
 
 ## Expose the approved deployment
 
-Use a separate approved exposure change after owner bootstrap and private checks.
+Use a separate approved exposure change after provider configuration and private checks.
 
 1. Move `activation/ingressroute.yaml` into `manifests/workout-tracker/`.
 2. Add `repbook` to the canonical `subdomains` list in
@@ -130,10 +144,11 @@ Use a separate approved exposure change after owner bootstrap and private checks
    8000. The frontend and API must share one origin. Keep
    `WORKOUT_PUBLIC_ORIGIN=https://repbook.pablomarelli.dev` and
    `WORKOUT_SECURE_COOKIE=true`.
-4. Disable edge caching for `/api/*`. Do not enable permissive cross-origin
+4. Disable edge caching for `/api/*` and `/auth/*`. Do not enable permissive cross-origin
    access. Use perimeter rate limits and access controls appropriate for a
    personal service. The app's process-local login limit is not a perimeter
-   control. No Authentik layer is required for its built-in account login.
+   control. Native Authentik OIDC owns login and callback handling; do not add
+   forward-auth middleware or enable password login on this deployment.
 5. Test login, logout, secure cookies, rejection of cross-origin mutations,
    account separation, restart persistence, and synchronization on the exact
    deployed image. Local container and WebKit results do not replace these
