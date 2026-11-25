@@ -56,7 +56,7 @@ spec:
             - name: HOUSEHOLD_TIMEZONE
               value: America/Argentina/Buenos_Aires
             - name: SESSION_TTL
-              value: 1h
+              value: 720h
             - name: BACKUP_DIR
               value: /data/backups
           securityContext:

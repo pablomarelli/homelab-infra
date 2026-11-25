@@ -6,7 +6,7 @@ metadata:
 spec:
   entryPoints: [web]
   routes:
-    - match: Host(`family.pablomarelli.dev`) && (PathPrefix(`/api/`) || PathPrefix(`/auth/`))
+    - match: Host(`family.pablomarelli.dev`) && (PathPrefix(`/api/`) || PathPrefix(`/auth/`) || PathPrefix(`/oauth/`) || PathPrefix(`/upload/`) || Path(`/mcp`) || PathPrefix(`/.well-known/oauth-`))
       kind: Rule
       priority: 100
       # Native OIDC owns the callback and API authentication. No forward auth.
