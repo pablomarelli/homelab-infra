@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-google-login-blueprint
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  google-login.yaml: |
+    version: 1
+    metadata:
+      name: Google Login Source
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    entries:
+      - model: authentik_sources_oauth.oauthsource
+        state: present
+        id: google-source
+        identifiers:
+          slug: google
+        attrs:
+          name: Google
+          enabled: true
+          provider_type: google
+          consumer_key: !Env GOOGLE_OAUTH_CLIENT_ID
+          consumer_secret: !Env GOOGLE_OAUTH_CLIENT_SECRET
+          user_matching_mode: email_link
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]
+          enrollment_flow: null
+      - model: authentik_stages_identification.identificationstage
+        state: present
+        identifiers:
+          name: default-authentication-identification
+        attrs:
+          show_source_labels: true
+          sources:
+            - !KeyOf google-source

@@ -20,6 +20,10 @@ spec:
     - repoURL: https://github.com/pablomarelli/homelab-infra.git
       targetRevision: main
       ref: values
+    # Blueprint ConfigMaps and ExternalSecrets
+    - repoURL: https://github.com/pablomarelli/homelab-infra.git
+      targetRevision: main
+      path: manifests/authentik-blueprints
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

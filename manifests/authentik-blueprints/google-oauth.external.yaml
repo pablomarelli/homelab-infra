@@ -1,0 +1,22 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authentik-google-oauth
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: authentik-google-oauth
+    creationPolicy: Owner
+  data:
+    - secretKey: GOOGLE_OAUTH_CLIENT_ID
+      remoteRef:
+        key: authentik/GOOGLE_OAUTH_CLIENT_ID
+    - secretKey: GOOGLE_OAUTH_CLIENT_SECRET
+      remoteRef:
+        key: authentik/GOOGLE_OAUTH_CLIENT_SECRET

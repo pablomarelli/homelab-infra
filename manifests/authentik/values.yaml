@@ -7,6 +7,9 @@ authentik:
     name: authentik
     user: authentik
     password: ""
+blueprints:
+  configMaps:
+    - authentik-google-login-blueprint
 server:
   replicas: 1
   deploymentStrategy:
@@ -23,6 +26,8 @@ server:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-google-oauth
   env:
     - name: AUTHENTIK_POSTGRESQL__HOST
       value: "postgresql.monitoring.svc.cluster.local"
@@ -52,6 +57,8 @@ worker:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-google-oauth
   env:
     - name: AUTHENTIK_POSTGRESQL__HOST
       value: "postgresql.monitoring.svc.cluster.local"
