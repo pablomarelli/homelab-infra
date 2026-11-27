@@ -28,6 +28,7 @@ server:
         name: authentik-secrets
     - secretRef:
         name: authentik-google-oauth
+        optional: true
   env:
     - name: AUTHENTIK_POSTGRESQL__HOST
       value: "postgresql.monitoring.svc.cluster.local"
@@ -59,6 +60,7 @@ worker:
         name: authentik-secrets
     - secretRef:
         name: authentik-google-oauth
+        optional: true
   env:
     - name: AUTHENTIK_POSTGRESQL__HOST
       value: "postgresql.monitoring.svc.cluster.local"
